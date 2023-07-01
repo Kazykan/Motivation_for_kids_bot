@@ -58,11 +58,34 @@ class Child(Base):
             'birthday': self.birthday,
             'sex': self.sex,
             'max_payout': self.max_payout,
+            'phone': self.phone,
             'parents': [{'id': x.id, 'name': x.name} for x in self.parents],
             'activities': [{'id': x.id, 'name': x.name} for x in self.activities]
         }
     
 
+    @property
+    def serialize_activities(self):
+        return {
+            'id': self.id,
+            'bot_user_id': self.bot_user_id,
+            'name': self.name,
+            'birthday': self.birthday,
+            'sex': self.sex,
+            'max_payout': self.max_payout,
+            'phone': self.phone,
+            'parents': [{'id': x.id, 'name': x.name} for x in self.parents],
+            'activities': [{
+                'id': x.id,
+                'name': x.name,
+                'title': x.title,
+                'percent_complete': x.percent_complete,
+                'cost': x.cost,
+                'max_cost': x.max_cost,
+                } for x in self.activities]
+        }
+
+    
 
 class Parent(Base):
     """Родители"""
@@ -97,9 +120,11 @@ class Activity(Base):
     __tablename__ = 'activity'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(15))
+    title: Mapped[str] = mapped_column(String(200), nullable=True)
     percent_complete: Mapped[int] = mapped_column(SmallInteger)  # Процент выполнения для завершения задания
     cost: Mapped[int] = mapped_column(SmallInteger)  # стоимость выполнения задания
+    max_cost: Mapped[int] = mapped_column(SmallInteger, nullable=True) # максимальная стоимость
     child_id: Mapped[int] = mapped_column(ForeignKey('child.id'))
     weeks: Mapped[List["Week"]] = relationship(
         secondary=activity_mtm_week,
@@ -112,8 +137,10 @@ class Activity(Base):
         return {
             'id': self.id,
             'name': self.name,
+            'title': self.title,
             'percent_complete': self.percent_complete,
             'cost': self.cost,
+            'max_cost': self.max_cost,
             'child_id': self.child_id,
             # 'child_name': session.query(Child.name).filter(Child.id == self.child_id).first(),
             'weeks': [{'week': x.week_day} for x in self.weeks],

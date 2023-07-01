@@ -9,6 +9,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 # from bot.handlers.food import register_handlers_food
 from bot.handlers.common import register_handlers_common
 from bot.handlers.cb_parent import register_cb_handlers_add_parent
+from bot.handlers.cb_child_activity import register_cb_handlers_child_activity
 from conf import TELEGRAM_TOKEN
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ async def main():
     # Регистрация хэндлеров
     register_handlers_common(dp)
     register_cb_handlers_add_parent(dp)
+    register_cb_handlers_child_activity(dp)
 
     # register_handlers_drinks(dp)
     # register_handlers_food(dp)

@@ -5,12 +5,11 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import Dispatcher, types
-from pydantic import BaseModel
 
 sys.path.append("..")
 from db_service.service import valid_number
 from db_service.dbservice import add_parent_and_child, is_parent_in_db
-from db_service.pydantic_model import Parent_and_child, Parent_base, Children_in_parent_base
+from db_service.pydantic_model import Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 
 def ikb_sex() -> types.InlineKeyboardMarkup:
@@ -30,13 +29,22 @@ def kb_share_phone() -> types.KeyboardButton:
 
 
 def ikb_parent_children(parent_data):
-    """Кнопка со списком детей"""
-    data = Parent_base.parse_obj(parent_data)
+    """Кнопка со списком детей + добавить еще одного ребенка"""
+    data = Parent_base_and_child.model_validate(parent_data)
     ikb = types.InlineKeyboardMarkup()
     ikb.row_width = 1
     ikb.markup = types.ReplyKeyboardRemove()
     for child in data.children:
         ikb.add(types.InlineKeyboardButton(text=f'{child.name} - тел.: 7···{child.phone[5:]}', callback_data=f'cb_child_{child.id}'))
+    ikb.add(types.InlineKeyboardButton(text='Добавить еще одного ребенка', callback_data=f'cb_add_child'))
+    return ikb
+
+
+def ikb_parent() -> types.InlineKeyboardButton:
+    """Кнопка продолжить с одной кнопкой"""
+    ikb = types.InlineKeyboardMarkup()
+    ikb.markup = types.ReplyKeyboardRemove()
+    ikb.add(types.InlineKeyboardButton(text='Продолжить', callback_data='cb_parent'))
     return ikb
 
 
@@ -52,6 +60,7 @@ class AddParentStatesGroup(StatesGroup):
 async def cb_add_parent(callback: types.CallbackQuery) -> None:
     """Первый пункт опросника по добавлению Родителя"""
     await callback.message.delete()
+    
     parent_data = is_parent_in_db(int(callback.from_user.id)) # Получем его данные
     if parent_data is None:  # если родителя нет, то добавляем
         await callback.message.answer(text="Для работы бота нужен Ваш номер телефона, нажмите внизу кнопку - Поделиться номером",
@@ -117,9 +126,9 @@ async def cb_add_parent_child_sex(callback: types.CallbackQuery, state: FSMConte
         if callback.data == 'cb_male':  # Получаем значение из callback_query_handler какая именно кнопка нажата
             data['child_sex'] = 1 # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
         else: data['child_sex'] = 2
-    info = Parent_and_child.parse_obj(data._data)
+    info = Parent_and_child.model_validate(data._data)
     info_db = add_parent_and_child(info)
-    await callback.message.answer(f'Добавили данные {info_db}') # TODO: Добавить удаление inline кнопок
+    await callback.message.answer(f'Добавили данные {info_db}', reply_markup=ikb_parent()) # TODO: Добавить удаление inline кнопок
     await state.finish()
 
 

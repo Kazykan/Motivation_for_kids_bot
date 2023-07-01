@@ -1,5 +1,6 @@
 import re
 from datetime import date
+from tabulate import tabulate
 
 def valid_number(number: str):
     """Проверка номера на валидность"""
@@ -11,3 +12,13 @@ def valid_number(number: str):
         if bool(result): return num
         else: return False
     except TypeError: return False
+
+
+def report_table_child(info):
+    text = f'Ребенок: {info.name}\n\n'
+    activity = []
+    for act in info.activities:
+        lst = [act.name, act.percent_complete, act.cost, act.max_cost]
+        activity.append(lst)
+    table = tabulate(activity, headers=['Задание', '%', 'cost', 'max_cost'])
+    return text + table

@@ -6,3 +6,4 @@ __pycache__
 .vscode
 sqlite.db
 bot/test.py
+db_service/add_test_data.py

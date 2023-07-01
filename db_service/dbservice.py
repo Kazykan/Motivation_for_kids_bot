@@ -1,6 +1,5 @@
 import locale, sys
 
-
 sys.path.append("..")
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
     child_mtm_parent
@@ -11,8 +10,10 @@ locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
 def is_parent_in_db(bot_user_id: int):
     """Поиск в БД есть ли такой пользователь"""
     parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()
-    if parent is None: return None
-    else: return parent.serialize
+    if parent is None:
+        return None
+    else:
+        return parent.serialize
 
 
 def add_parent_and_child(info):
@@ -37,3 +38,18 @@ def add_parent_and_child(info):
     session.commit()
     info_db = session.query(Parent).filter(Parent.phone == info.phone_number).first()
     return info_db.serialize
+
+
+def child_data(child_id: int):
+    """Данные по ребенку"""
+    child_data = session.query(Child).filter(Child.id == child_id).first()
+    return child_data.serialize_activities
+
+
+def child_activity(child_id: int):
+    """Данные по заданиям"""
+    child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
+    activity_data = []
+    for data in child_data:
+        activity_data.append(data.serialize)
+    return activity_data
