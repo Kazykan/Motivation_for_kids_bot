@@ -1,0 +1,8 @@
+.env
+conf.py
+/env/
+/venv/
+__pycache__
+.vscode
+sqlite.db
+bot/test.py
