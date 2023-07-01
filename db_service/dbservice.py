@@ -8,19 +8,6 @@ from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, eng
 locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
 
 
-if session.query(Week).count() < 0:
-    for x in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
-        one_weak = Week(
-            week_day = x
-        )
-        session.add(one_weak)
-        session.commit()
-
-    week_list = session.query(Week.id, Week.week_day).all()
-    for week in week_list:
-        print(f'id: {week[0]}, name: {week[1]}')
-
-
 def is_parent_in_db(bot_user_id: int):
     """Поиск в БД есть ли такой пользователь"""
     parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()

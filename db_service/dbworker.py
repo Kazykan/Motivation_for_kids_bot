@@ -161,3 +161,16 @@ class Activity_day(Base):
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
+
+
+if session.query(Week).count() == 0:
+    for x in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
+        one_weak = Week(
+            week_day = x
+        )
+        session.add(one_weak)
+        session.commit()
+
+    week_list = session.query(Week.id, Week.week_day).all()
+    for week in week_list:
+        print(f'id: {week[0]}, name: {week[1]}')
