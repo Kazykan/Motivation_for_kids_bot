@@ -2,6 +2,8 @@ import re
 from datetime import date
 from tabulate import tabulate
 
+from db_service.dbservice import child_activity_by_day
+
 def valid_number(number: str):
     """Проверка номера на валидность"""
     num = ''.join([x for x in number if x.isdigit()])
@@ -18,7 +20,8 @@ def report_table_child(info):
     text = f'Ребенок: {info.name}\n\n'
     activity = []
     for act in info.activities:
+        weeks_activity = child_activity_by_day(act.id)
         lst = [act.name, act.percent_complete, act.cost, act.max_cost]
-        activity.append(lst)
-    table = tabulate(activity, headers=['Задание', '%', 'cost', 'max_cost'])
+        activity.append(lst + weeks_activity)
+    table = tabulate(activity, headers=['Задание', '%', 'cost', 'max_cost', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'])
     return text + table

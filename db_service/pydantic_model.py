@@ -72,3 +72,9 @@ class Child_serialize_activities(Child_Base):
     phone: str | None
     parents: List[Parent_list]
     activities: List[Activity_list]
+
+
+class Activity_day_Base(BaseModel):
+    is_done: bool | None
+    day: date | None
+    activity_id: int

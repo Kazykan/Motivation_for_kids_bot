@@ -53,3 +53,18 @@ def child_activity(child_id: int):
     for data in child_data:
         activity_data.append(data.serialize)
     return activity_data
+
+
+def child_activity_by_day(activity_day_id: int) -> list:
+    days = session.query(Activity_day.is_done, Activity_day.day).filter(Activity_day.activity_id == activity_day_id).all()
+    weeks = ['--', '--', '--', '--', '--', '--', '--']
+    for day in days:
+        if day.is_done:
+            is_done = 'ok'
+        elif day.is_done == False:
+            is_done = 'no'
+        week = day.day.weekday()
+        weeks[week] = is_done
+    print(weeks)
+    return weeks
+        
