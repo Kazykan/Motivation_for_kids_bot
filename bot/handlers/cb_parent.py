@@ -1,156 +1,117 @@
 """Опросник для создания профиля родителя"""
 import sys
 
-from aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram import Dispatcher, types
+from aiogram import Router, types, F
+from aiogram.filters.text import Text
+from aiogram.fsm.context import FSMContext
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 
 sys.path.append("..")
-from db_service.service import valid_number
-from db_service.dbservice import add_parent_and_child, is_parent_in_db
+from bot.statesgroup import AddParentStatesGroup
+from bot.keyboards.kb_general import ikb_gender
+from bot.keyboards.kb_parent import ikb_parent_children, kb_share_phone
+from bot.cbdata import GenderCallbackFactory
+from db_service.service import get_child_gender_emoji, valid_number
+from db_service.dbservice import Parent_DB, add_parent_and_child, is_parent_in_db
 from db_service.pydantic_model import Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 
-def ikb_sex() -> types.InlineKeyboardMarkup:
-    """Кнопки пол человека"""
-    ikb = types.InlineKeyboardMarkup(row_width=2, inline_keyboard=[
-        [types.InlineKeyboardButton(text='Муж. 👨', callback_data='cb_male'),
-         types.InlineKeyboardButton(text='Жен. 👩', callback_data='cb_female')],
-    ], markup=types.ReplyKeyboardRemove())
-    return ikb
-
-
-def kb_share_phone() -> types.KeyboardButton:
-    button_phone = types.KeyboardButton(text="Поделиться номером ☎️", request_contact=True)
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    keyboard.add(button_phone)
-    return keyboard
-
-
-def ikb_parent_children(parent_data):
-    """Кнопка со списком детей + добавить еще одного ребенка"""
-    data = Parent_base_and_child.model_validate(parent_data)
-    ikb = types.InlineKeyboardMarkup()
-    ikb.row_width = 1
-    ikb.markup = types.ReplyKeyboardRemove()
-    for child in data.children:
-        ikb.add(types.InlineKeyboardButton(text=f'{child.name} - тел.: 7···{child.phone[5:]}', callback_data=f'cb_child_{child.id}'))
-    ikb.add(types.InlineKeyboardButton(text='Добавить еще одного ребенка', callback_data=f'cb_add_child'))
-    return ikb
+router = Router()
 
 
 def ikb_parent() -> types.InlineKeyboardButton:
     """Кнопка продолжить с одной кнопкой"""
-    ikb = types.InlineKeyboardMarkup()
-    ikb.markup = types.ReplyKeyboardRemove()
-    ikb.add(types.InlineKeyboardButton(text='Продолжить', callback_data='cb_parent'))
-    return ikb
+    builder = InlineKeyboardBuilder()
+    builder.button(text='Продолжить', callback_data='cb_parent')
+    builder.adjust(1)
+    return builder.as_markup()
 
 
-class AddParentStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по добавлению добавлению Родителя и детей"""
-    parent_number = State()
-    sex = State()
-    child_phone = State()
-    child_name = State()
-    child_sex = State()
-
-
-async def cb_add_parent(callback: types.CallbackQuery) -> None:
-    """Первый пункт опросника по добавлению Родителя"""
-    await callback.message.delete()
-    
+@router.callback_query(Text('cb_parent'))
+async def cb_add_parent(callback: types.CallbackQuery, state: FSMContext) -> None:
+    """Первый пункт опросника по регистрации ребенка"""
     parent_data = is_parent_in_db(int(callback.from_user.id)) # Получем его данные
     if parent_data is None:  # если родителя нет, то добавляем
-        await callback.message.answer(text="Для работы бота нужен Ваш номер телефона, нажмите внизу кнопку - Поделиться номером",
+        await callback.message.answer(text="Для работы бота нужен Ваш номер телефона",
                                   reply_markup=kb_share_phone())
-        await AddParentStatesGroup.parent_number.set()
+        await state.set_state(AddParentStatesGroup.parent_number)
     else: # если есть запускаем меню работы с ним
-        await callback.message.answer(text='Выберите ребенка', reply_markup=ikb_parent_children(parent_data))
+        await callback.message.answer(
+            text='Выберите ребенка',
+            reply_markup=ikb_parent_children(bot_user_id=int(callback.from_user.id))
+            )
 
 
-
+@router.message(F.contact,
+                AddParentStatesGroup.parent_number)
 async def cb_add_parent_number(message: types.Message, state: FSMContext) -> None:
     """Добавление данных родителя - 2 этап получение номера телефона"""
     contact = message.contact  # Получем его данные
-    await message.delete()
-    await message.answer(f"Спасибо, {contact.full_name}.\n", reply_markup=types.ReplyKeyboardRemove())
-    async with state.proxy() as data:
-        data['phone_number'] = valid_number(contact.phone_number)
-        data['name'] = contact.full_name
-        data['bot_user_id'] = contact.user_id
-    await message.answer(f"Ваш номер {contact.phone_number} был получен. \n"
-                         f"Ваш id {contact.user_id}. \n"
-                         f"Выберите ваш пол",
-                         reply_markup=ikb_sex())
-    await AddParentStatesGroup.sex.set()
+    fullname = ''
+    if contact.last_name:
+        fullname += f'{contact.last_name} '
+    if contact.first_name:
+        fullname += f'{contact.first_name}'
+    if fullname == '':
+        pass # TODO: Опросник если имя не распознано
+    phone_number = valid_number(contact.phone_number)
+    parent = Parent_DB.get_or_update_data_by_phone_number(phone_number=phone_number, bot_user_id=message.from_user.id)
+    if parent:  # Если номер телефона есть в БД
+        await message.answer(
+            text='Выберите ребенка',
+            reply_markup=ikb_parent_children(bot_user_id=int(message.from_user.id))
+            )
+    else:
+        await message.answer(f"Спасибо, {fullname}.\n", reply_markup=types.ReplyKeyboardRemove())
+        await state.update_data(phone_number=phone_number)
+        await state.update_data(name=f'{fullname}')
+        await state.update_data(bot_user_id=contact.user_id)
+        data = await state.get_data()  # Загружаем данные из FSM
+        await message.answer(f"Ваш номер {data['phone_number']} был получен. \n"
+                            f"Выберите ваш пол",
+                            reply_markup=ikb_gender())
+        await state.set_state(AddParentStatesGroup.gender)
 
 
-async def cb_add_parent_sex(callback: types.CallbackQuery, state: FSMContext) -> None:
+@router.callback_query(GenderCallbackFactory.filter(), AddParentStatesGroup.gender)
+async def cb_add_parent_gender(callback: types.CallbackQuery,
+                               callback_data: GenderCallbackFactory,
+                               state: FSMContext) -> None:
     """Добавление данных родителя - 3 этап пол родителя"""
-    await callback.message.delete()
-    async with state.proxy() as data:
-        if callback.data == 'cb_male':  # Получаем значение из callback_query_handler какая именно кнопка нажата
-            data['sex'] = 1 # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
-        else: data['sex'] = 2
-    await callback.message.answer(f'Введите номер телефона ребенка', reply_markup=types.ReplyKeyboardRemove()) # TODO: Добавить удаление inline кнопок
-    await AddParentStatesGroup.child_phone.set()
+    await state.update_data(sex=int(callback_data.gender)) # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
+    await callback.message.edit_text(f'Введите номер телефона ребенка') # TODO: Добавить удаление inline кнопок
+    await state.set_state(AddParentStatesGroup.child_phone)
 
 
-async def cb_add_parent_child_phone(message: types.Message, state: FSMContext) -> None:
+@router.message(AddParentStatesGroup.child_phone)
+async def add_parent_child_phone(message: types.Message, state: FSMContext) -> None:
     """Добавление данных родителя - 4 этап номер телефона ребенка"""
-    await message.delete()
     child_number = valid_number(message.text)
     if child_number:
-        async with state.proxy() as data:
-            data['child_number'] = child_number
-        await message.answer(f'Для номера: {data["child_number"]} введите имя ребенка')
-        await AddParentStatesGroup.child_name.set()
+        await state.update_data(child_number=child_number)
+        await message.answer(f'Для номера: <b>{child_number}</b> введите имя ребенка')
+        await state.set_state(AddParentStatesGroup.child_name)
     else:
-        await message.reply(f'Номер - "{message.text}" не распознан\nПожалуйста введите номер телефон в формате 7987 654 32 10')
+        await message.reply(f'Номер - "{message.text}" не распознан\nПожалуйста введите номер телефон в формате 7 987 654 32 10')
 
-
+@router.message(AddParentStatesGroup.child_name)
 async def cb_add_parent_child_name(message: types.Message, state: FSMContext) -> None:
     """Добавление данных родителя - 5 этап имя ребенка"""
-    async with state.proxy() as data:
-        data['child_name'] = message.text
-    await message.answer(f'Выберите пол - {data["child_name"]}', reply_markup=ikb_sex())
-    await AddParentStatesGroup.child_sex.set()
+    await state.update_data(child_name=message.text)
+    await message.answer(f'Выберите пол - {message.text}', reply_markup=ikb_gender())
+    await state.set_state(AddParentStatesGroup.child_gender)
 
 
-async def cb_add_parent_child_sex(callback: types.CallbackQuery, state: FSMContext) -> None:
+@router.callback_query(GenderCallbackFactory.filter(), AddParentStatesGroup.child_gender)
+async def cb_add_parent_child_gender(callback: types.CallbackQuery,
+                               callback_data: GenderCallbackFactory,
+                               state: FSMContext) -> None:
     """Добавление данных родителя - 6 этап пол ребенка"""
-    await callback.message.delete()
-    async with state.proxy() as data:
-        if callback.data == 'cb_male':  # Получаем значение из callback_query_handler какая именно кнопка нажата
-            data['child_sex'] = 1 # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
-        else: data['child_sex'] = 2
-    info = Parent_and_child.model_validate(data._data)
+    await state.update_data(child_sex=int(callback_data.gender)) # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
+    data = await state.get_data()  # Загружаем данные из FSM
+    info = Parent_and_child.validate(data)
     info_db = add_parent_and_child(info)
-    await callback.message.answer(f'Добавили данные {info_db}', reply_markup=ikb_parent()) # TODO: Добавить удаление inline кнопок
-    await state.finish()
-
-
-def register_cb_handlers_add_parent(dp: Dispatcher):
-    dp.register_callback_query_handler(cb_add_parent,
-                                       text_contains='cb_parent',
-                                       state='*')
-    # регистрация след этапа машины состояний, в случае если передали телефонный номер
-    dp.register_message_handler(cb_add_parent_number,
-                                content_types=types.ContentType.CONTACT,
-                                state=AddParentStatesGroup.parent_number)
-    dp.register_callback_query_handler(cb_add_parent_sex,
-                                       text_contains='cb_male',
-                                       state=AddParentStatesGroup.sex)  # TODO: два одинаковых колбека cb_male и cb_female посмотреть как их можно объединить
-    dp.register_callback_query_handler(cb_add_parent_sex,
-                                       text_contains='cb_female',
-                                       state=AddParentStatesGroup.sex)
-    dp.register_message_handler(cb_add_parent_child_phone, state=AddParentStatesGroup.child_phone)
-    dp.register_message_handler(cb_add_parent_child_name, state=AddParentStatesGroup.child_name)
-    dp.register_callback_query_handler(cb_add_parent_child_sex,
-                                       text_contains='cb_male',
-                                       state=AddParentStatesGroup.child_sex)  # TODO: два одинаковых колбека cb_male и cb_female посмотреть как их можно объединить
-    dp.register_callback_query_handler(cb_add_parent_child_sex,
-                                       text_contains='cb_female',
-                                       state=AddParentStatesGroup.child_sex)
+    await callback.message.edit_text(f'Добавили данные {info_db}', reply_markup=ikb_parent()) # TODO: Добавить удаление inline кнопок
+    await state.clear()
+    

@@ -92,7 +92,7 @@ class Parent(Base):
     __tablename__ = 'parent'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    bot_user_id: Mapped[int] = mapped_column(Integer)
+    bot_user_id: Mapped[int] = mapped_column(Integer, nullable=True)
     name: Mapped[str] = mapped_column(String(30))
     sex: Mapped[int] = mapped_column(SmallInteger)  # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
     access: Mapped[int] = mapped_column(Integer, default=0) #TODO расписать функционал доступа
@@ -111,7 +111,10 @@ class Parent(Base):
             'sex': self.sex,
             'access': self.access,
             'phone': self.phone,
-            'children': [{'id': x.id, 'name': x.name, 'phone': x.phone} for x in self.children]
+            'children': [{'id': x.id,
+                          'name': x.name,
+                          'phone': x.phone,
+                          'sex': x.sex} for x in self.children]
         }
     
 
@@ -134,6 +137,7 @@ class Activity(Base):
 
     @property
     def serialize(self):
+    # TODO: Загрузка текущей недели в activity_days
         return {
             'id': self.id,
             'name': self.name,
@@ -143,7 +147,7 @@ class Activity(Base):
             'max_cost': self.max_cost,
             'child_id': self.child_id,
             # 'child_name': session.query(Child.name).filter(Child.id == self.child_id).first(),
-            'weeks': [{'week': x.week_day} for x in self.weeks],
+            'weeks': [{'week': x.week_day, 'week_id': x.id} for x in self.weeks],
             'activity_days': [
                 {'id': x.id,
                  'is_done': x.is_done,
@@ -163,6 +167,13 @@ class Week(Base):
         secondary=activity_mtm_week,
         back_populates="weeks"
     )
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'week_day': self.week_day
+        }
 
 
 class Activity_day(Base):

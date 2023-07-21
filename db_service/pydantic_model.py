@@ -3,9 +3,9 @@ from typing import List
 from datetime import datetime, date
 
 
-class Week_Base(BaseModel):
-    id: int
-
+class Week_list(BaseModel):
+    week_id: int
+    week: str
 
 class Parent_and_child(BaseModel):
     name: str
@@ -24,9 +24,11 @@ class Child_Base(BaseModel):
 
 
 class Children_in_parent_base(BaseModel):
-     id: int
-     name: str
-     phone: str
+    id: int
+    name: str
+    phone: str
+    sex: int
+
 
 
 class Parent_list(BaseModel):
@@ -77,4 +79,17 @@ class Child_serialize_activities(Child_Base):
 class Activity_day_Base(BaseModel):
     is_done: bool | None
     day: date | None
+
+
+class Activity_days_list(Activity_day_Base):
+    id: int
+
+
+class Activity_day_serializer(Activity_days_list):
     activity_id: int
+
+
+class Activity_serialize(Activity_base):
+    id: int
+    weeks: List[Week_list] | None
+    activity_days: List[Activity_days_list] | None

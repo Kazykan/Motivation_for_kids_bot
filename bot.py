@@ -3,20 +3,23 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.fsm.storage.memory import MemoryStorage
 
-# from bot.handlers.drinks import register_handlers_drinks
-# from bot.handlers.food import register_handlers_food
-from bot.handlers.common import register_handlers_common
-from bot.handlers.cb_parent import register_cb_handlers_add_parent
-from bot.handlers.cb_child_activity import register_cb_handlers_child_activity
+
+from bot.handlers import common, cb_parent, cb_child_activity, cb_child, cb_add_one_more_parent,\
+    cb_add_child
+
+from bot.handlers.apshed import send_message_cron_middleware
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from conf import TELEGRAM_TOKEN
+
 logger = logging.getLogger(__name__)
 
 
 async def set_commands(bot: Bot):
     commands = [
-        BotCommand(command="/drinks", description="Заказать напитки"),
+        BotCommand(command="/start", description="Старт"),
         BotCommand(command="/food", description="Заказать блюда"),
         BotCommand(command="/cancel", description="Отменить текущее действие")
     ]
@@ -24,32 +27,37 @@ async def set_commands(bot: Bot):
 
 
 async def main():
-    # Настройка логирования в stdout
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
     logger.error("Starting bot")
 
-    # Объявление и инициализация объектов бота и диспетчера
-    bot = Bot(token=TELEGRAM_TOKEN)
-    dp = Dispatcher(bot, storage=MemoryStorage())
 
-    # Регистрация хэндлеров
-    register_handlers_common(dp)
-    register_cb_handlers_add_parent(dp)
-    register_cb_handlers_child_activity(dp)
+    bot = Bot(token=TELEGRAM_TOKEN, parse_mode="HTML")
+    dp = Dispatcher(storage=MemoryStorage())
 
-    # register_handlers_drinks(dp)
-    # register_handlers_food(dp)
+    scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+    scheduler.add_job(send_message_cron_middleware, 'cron', hour=10, minute=47, kwargs={'bot': bot})
 
-    # Установка команд бота
+
+    dp.include_router(common.router)
+    dp.include_router(cb_parent.router)
+    dp.include_router(cb_child_activity.router)
+    dp.include_router(cb_child.router)
+    dp.include_router(cb_add_one_more_parent.router)
+    dp.include_router(cb_add_child.router)
+    
     await set_commands(bot)
+    await bot.delete_webhook(drop_pending_updates=True)
 
-    # Запуск поллинга
-    # await dp.skip_updates()  # пропуск накопившихся апдейтов (необязательно)
-    await dp.start_polling()
+    scheduler.start()
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.error('Bot stopped!')

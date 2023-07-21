@@ -1,14 +1,20 @@
 import locale, sys
+from tabulate import tabulate
+from datetime import date, timedelta
+import math
 
-sys.path.append("..")
+sys.path.append(".")
+from db_service.pydantic_model import Child_Base
+from db_service.service import get_this_week, is_day_in_activity_days
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
-    child_mtm_parent
+    child_mtm_parent, activity_mtm_week
+from sqlalchemy import select, and_
 
 locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
 
 
 def is_parent_in_db(bot_user_id: int):
-    """Поиск в БД есть ли такой пользователь"""
+    """Поиск в БД есть такой пользователь"""
     parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()
     if parent is None:
         return None
@@ -40,13 +46,18 @@ def add_parent_and_child(info):
     return info_db.serialize
 
 
-def child_data(child_id: int):
+def get_child_data(child_id: int):
     """Данные по ребенку"""
     child_data = session.query(Child).filter(Child.id == child_id).first()
     return child_data.serialize_activities
 
 
-def child_activity(child_id: int):
+def get_child_activity_one(activity_id: int) -> dict:
+    activity = session.query(Activity).filter(Activity.id == activity_id).first()
+    return activity.serialize
+
+
+def get_child_activities(child_id: int):
     """Данные по заданиям"""
     child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
     activity_data = []
@@ -54,17 +65,279 @@ def child_activity(child_id: int):
         activity_data.append(data.serialize)
     return activity_data
 
-
 def child_activity_by_day(activity_day_id: int) -> list:
     days = session.query(Activity_day.is_done, Activity_day.day).filter(Activity_day.activity_id == activity_day_id).all()
-    weeks = ['--', '--', '--', '--', '--', '--', '--']
+    weeks = ['-', '-', '-', '-', '-', '-', '-']
     for day in days:
         if day.is_done:
-            is_done = 'ok'
+            is_done = 'v'
         elif day.is_done == False:
-            is_done = 'no'
+            is_done = 'x'
         week = day.day.weekday()
         weeks[week] = is_done
-    print(weeks)
+    weeks.insert(5, ' ')
+    return [''.join(weeks)]
+
+
+def add_activity(info):
+    activity = Activity(
+        name=info.name,
+        title=info.title,
+        percent_complete=info.percent_complete,
+        cost=info.cost,
+        max_cost=info.cost,
+        child_id=info.child_id
+    )
+    session.add(activity)
+    session.commit()
+    return activity.serialize
+
+
+def get_weeks_list_for_activities(activity_id):
+    """Получаем список дней недели для задания"""
+    activity_info = session.query(Activity).filter(Activity.id == activity_id).first()
+    return activity_info.serialize
+
+
+def get_activity_day(activity_day_id: int):
+    activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
+    return activity_day.serialize
+
+
+def change_activity_day_is_done(activity_day_id: int):
+    activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
+    if activity_day.is_done:
+        activity_day.is_done = False
+    else:
+        activity_day.is_done = True
+    session.commit()
+    return True
+
+
+def get_activity_week(activity_id, week_id):
+    stmt = select(Week).\
+    where(and_(
+        Activity.id == activity_id,
+        Week.id == week_id,
+        Activity.id == activity_mtm_week.c.activity_id,
+        Week.id == activity_mtm_week.c.week_id
+    ))
+    weeks = session.execute(stmt).scalars().first()
     return weeks
+
+
+def add_activity_week(activity_id, week_id):
+    activity = session.query(Activity).filter(Activity.id == activity_id).first()
+    week = session.query(Week).filter(Week.id == week_id).first()
+    activity.weeks.append(week)
+    session.commit()
+    change_to_current_weeks_task(activity_id=activity_id)
+    return True
+
+
+def delete_activity_week(activity_id, week_id):
+    """Удаление связи между активностью и днем недели"""
+    activity = session.query(Activity).filter(Activity.id == activity_id).first()
+    week = session.query(Week).filter(Week.id == week_id).first()
+    activity.weeks.remove(week)
+    session.commit()
+    change_to_current_weeks_task(activity_id=activity_id)
+    return True
+
+
+def change_to_current_weeks_task(activity_id):
+    """Обновление заданий в текущей неделе, смотри расписание
+    по активным дням недели и добавляем задания или удаляем их"""
+    stmt = select(Week.id).where(and_(
+        Activity.id == activity_id,
+        Activity.id == activity_mtm_week.c.activity_id,
+        Week.id == activity_mtm_week.c.week_id
+    ))
+    act_week_day = session.execute(stmt).scalars().all()  # Получаем какие дни недели выбраны [1, 3, 5, 6]
+    current_week = get_this_week()  # [datetime.date(2023, 7, 17), datetime.date(2023, 7, 18), ...]
+    activity_day_to_db = get_activity_days_to_week(activity_id=activity_id,
+                                                   start_date=current_week[0],
+                                                   end_date=current_week[-1])
+    for day in current_week:
+        activity_id_to_this_day = is_day_in_activity_days(activity_day_to_db=activity_day_to_db, day=day)
+        if (day.weekday() + 1) in act_week_day: # Есть текущий день в расписании
+            if not activity_id_to_this_day:  # И его нет в БД, тогда создаем эту запись
+                add_activity_day(activity_id=activity_id, day=day)
+        else:  # Если нет текущего дня в расписании, но он есть в БД - удаляем
+            if activity_id_to_this_day:
+                delete_activity_day(activity_day_id=activity_id_to_this_day[0])
+    return True
+
+
+def get_activity_days_to_week(
+        activity_id: int, start_date: date, end_date: date, count=False):
+    if count:
+        activity_days = session.query(Activity_day).filter(and_(
+        Activity_day.day.between(start_date, end_date),
+        Activity_day.activity_id == activity_id)).count()
+    else:
+        activity_days = session.query(Activity_day.id,
+                                  Activity_day.day,
+                                  Activity_day.is_done).filter(and_(
+        Activity_day.day.between(start_date, end_date),
+        Activity_day.activity_id == activity_id
+    ))
+    return activity_days
+
+
+def report_table_child(info):
+    text = f'Ребенок: {info.name}\n\n'
+    activity_lst = []
+    for activity in info.activities:
+        weeks_activity = child_activity_by_day(activity.id)
+        weekly_total_payout = get_weekly_total_payout(
+            activity_id=activity.id,
+            day=date.today(), cost=activity.cost)
+        lst = [activity.name, weekly_total_payout]
+        activity_lst.append(lst + weeks_activity)
+    total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
+    table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
+    return text + table + total_payout
+
+
+def get_weekly_total_payout(activity_id, day, cost):
+    current_week = get_this_week(this_day=day)
+    activity_day_to_db = get_activity_days_to_week(activity_id=activity_id,
+                                                start_date=current_week[0],
+                                                end_date=current_week[-1])
+    count = get_activity_days_to_week(activity_id=activity_id,
+                                                start_date=current_week[0],
+                                                end_date=current_week[-1], count=True)
+    one_day_cost = math.ceil(cost / count)
+    total_payout = 0
+    for activity_day in activity_day_to_db:
+        if activity_day[2]:
+            total_payout += one_day_cost
+    return total_payout
+
+
+def add_activity_day(activity_id, day):
+    activ = Activity_day(
+    is_done=False,
+    day=day,
+    activity_id=activity_id
+    )
+    session.add(activ)
+    session.commit()
+
+
+def delete_activity_day(activity_day_id):
+    activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
+    session.delete(activity_day)
+    session.commit()
+
+
+def get_parent_bot_user_id_is_active():
+    parents_id = session.query(Parent.bot_user_id).all()
+    return parents_id
+
+
+class Parent_DB:
+    
+    @staticmethod
+    def add_one_more_parent(data):
+        """{'name': 'Марина', 'gender': 2, 'phone': '7962412****', 'all_children_id': [1]}"""
+        parent = Parent(
+            name=data['name'],
+            phone=data['phone'],
+            sex=data['gender']
+        )
+        session.add(parent)
+        session.commit()
+        for child_id in data['all_children_id']:  # Добавляем через цикл связь МТМ новый родитель и детей
+            child_ph = session.query(Child).filter(Child.id == child_id).first()
+            child_ph.parents.append(parent)
+            session.commit()
+    
+    @staticmethod
+    def get_or_update_data_by_phone_number(phone_number: str, bot_user_id: int):
+        parent = session.query(Parent).filter(Parent.phone == phone_number).first()
+        if parent is None:
+            return None
+        else:
+            parent.bot_user_id = bot_user_id
+            session.commit()
+            return parent.serialize
+    
+    @staticmethod
+    def get_all_parent_id(child_id: int) -> list:
+        """ Список id всех родителей"""
+        stmt = select(Parent.id).where(and_(
+            Child.id == child_id,
+            Parent.id == child_mtm_parent.c.parent_id,
+            Child.id == child_mtm_parent.c.child_id
+        ))
+        all_parent_id = session.execute(stmt).scalars().all()
+        return all_parent_id
+
+
+class Child_DB:
+
+    @staticmethod
+    def add_child(data: Child_Base, all_parent_id: list):
+        child = Child(
+            name = data.name,
+            sex = data.sex,
+            phone = data.phone
+        )
+        session.add(child)
+        session.commit()
+        for parent_id in all_parent_id: # Добавляем через цикл связь МТМ новый родитель и детей
+            parent_ph = session.query(Parent).filter(Parent.id == parent_id).first()
+            parent_ph.children.append(child)
+            session.commit()
+        return child.serialize
+
+
+    @staticmethod
+    def update(child_id: int, bot_user_id: int):
+        """Добавляем данные"""
+        child = session.query(Child).filter(Child.id == child_id).first()
+        child.bot_user_id = bot_user_id
+        session.commit()
+        return True
+    
+    @staticmethod
+    def check_is_phone(child_number: str):
+        child = session.query(Child).filter(Child.phone == child_number).first()
+        if child:
+            return child.serialize_activities
+        else:
+            return None
+    
+    @staticmethod
+    def check_is_bot_user_id(bot_user_id: int):
+        """Поиск в БД если такой ребенок"""
+        child = session.query(Child).filter(Child.bot_user_id == bot_user_id).first()
+        if child is None:
+            return None
+        else:
+            return child.serialize_activities
         
+    
+    @staticmethod
+    def get_all_children_id(parent_id: int) -> list:
+        """ Список id всех родителей"""
+        stmt = select(Child.id).where(and_(
+            Parent.id == parent_id,
+            Parent.id == child_mtm_parent.c.parent_id,
+            Child.id == child_mtm_parent.c.child_id
+        ))
+        all_children_id = session.execute(stmt).scalars().all()
+        return all_children_id
+    
+    @staticmethod
+    def get_first_child_id(bot_user_id: int):
+        """Вернуть id первого ребенка"""
+        stmt = select(Child.id).where(and_(
+            Parent.bot_user_id == bot_user_id,
+            Parent.id == child_mtm_parent.c.parent_id,
+            Child.id == child_mtm_parent.c.child_id
+        ))
+        one_child_id = session.execute(stmt).scalars().first()
+        return one_child_id
