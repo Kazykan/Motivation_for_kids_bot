@@ -9,3 +9,6 @@ bot написан на aiogram 3.x & sqlalchemy 2.x
 ### Отчеты
 
 ![Задание](./project_img/report_card.png)
+
+
+![Задание](./project_img/work.gif)

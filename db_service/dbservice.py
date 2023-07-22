@@ -10,7 +10,7 @@ from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, eng
     child_mtm_parent, activity_mtm_week
 from sqlalchemy import select, and_
 
-locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
+locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 def is_parent_in_db(bot_user_id: int):
