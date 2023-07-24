@@ -1,10 +1,10 @@
 import locale, sys
 from tabulate import tabulate
 from datetime import date, timedelta
-import math
+import math, pprint
 
 sys.path.append(".")
-from db_service.pydantic_model import Child_Base
+from db_service.pydantic_model import Activity_days_list, Child_Base
 from db_service.service import get_this_week, is_day_in_activity_days
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
     child_mtm_parent, activity_mtm_week
@@ -52,9 +52,25 @@ def get_child_data(child_id: int):
     return child_data.serialize_activities
 
 
-def get_child_activity_one(activity_id: int) -> dict:
-    activity = session.query(Activity).filter(Activity.id == activity_id).first()
-    return activity.serialize
+def get_child_activity_one(activity_id: int, day=False) -> dict:
+    this_week = get_this_week(this_day=day)
+    activity = session.query(Activity).filter(Activity.id == activity_id).first().serialize
+    activity_days_damp = session.query(
+                        Activity_day.id,
+                        Activity_day.is_done,
+                        Activity_day.day).filter(and_(
+        Activity_day.day.between(this_week[0], this_week[-1]),
+        Activity_day.activity_id == activity_id))
+    activity_days = []
+    for day in activity_days_damp:
+        activity_days.append({'id': day.id,
+                              'is_done': day.is_done,
+                              'day': day.day})
+    activity['activity_days'] = activity_days
+    return activity
+
+
+pprint.pprint(get_child_activity_one(activity_id=1))
 
 
 def get_child_activities(child_id: int):
@@ -208,7 +224,10 @@ def get_weekly_total_payout(activity_id, day, cost):
     count = get_activity_days_to_week(activity_id=activity_id,
                                                 start_date=current_week[0],
                                                 end_date=current_week[-1], count=True)
-    one_day_cost = math.ceil(cost / count)
+    try:
+        one_day_cost = math.ceil(cost / count)
+    except ZeroDivisionError:
+        one_day_cost = 0
     total_payout = 0
     for activity_day in activity_day_to_db:
         if activity_day[2]:

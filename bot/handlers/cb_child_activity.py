@@ -53,8 +53,8 @@ def ikb_activity_tick(activity_id: int):
     days = sorted(activity.activity_days, key=lambda x: x.day)  # Сортировка по дате
     for day in days:
         if day.is_done:
-            is_done, is_not_done = '✅', '❌'
-        else: is_done, is_not_done = '❌', '✅'
+            is_done = '✅'
+        else: is_done = '❌'
         builder.button(text=f'{day.day.strftime("%a %d %b")} {is_done}',
                        callback_data='cb_activity_day_one')
         builder.button(text=f'изменить 🔄',

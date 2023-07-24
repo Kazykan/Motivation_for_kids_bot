@@ -53,16 +53,21 @@ def split_by_week_day(week_list):
     return ''.join([week for week in {**source_dict, **all}.values()])
 
 
-def activity_to_text(activity: Activity_serialize):
+def activity_to_text(activity: Activity_serialize, day=False):
     text = (f'Задание: <b>{activity.name}</b>\n'
             f'Описание: <b>{activity.title}</b>\n'
             f'Стоимость за выполнение: <b>{activity.cost} ₽</b>\n'
             f'Активный дни недели: {split_by_week_day(activity.weeks)}')
+    if day:
+        this_week = get_this_week(this_day=day)
+    else:
+        this_week = get_this_week()
     days = sorted(activity.activity_days, key=lambda x: x.day)  # Сортировка по дате
     for day in days:
-        text += f'\n{day.day.strftime("%a %d %b")} '
-        if day.is_done: text += '✅'
-        else: text += '❌'
+        if day.day in this_week:
+            text += f'\n{day.day.strftime("%a %d %b")} '
+            if day.is_done: text += '✅'
+            else: text += '❌'
     return text
 
 
