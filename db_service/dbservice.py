@@ -379,7 +379,3 @@ class Activity_day_DB():
             Activity_day.day.between(this_week[0], this_week[-1]),
         )).first()
         return activity_day
-
-data = Activity_day_DB.is_previous_week(child_id=1, day=False)
-if data:
-    pprint.pprint(f'{data} *******')
