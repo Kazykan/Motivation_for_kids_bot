@@ -1,3 +1,4 @@
+import datetime
 import re, locale
 from datetime import date, timedelta
 
@@ -72,7 +73,7 @@ def activity_to_text(activity: Activity_serialize, day=False):
 
 
 def get_this_week(this_day=False):
-    """Получаем даты текущей недели"""
+    """Получаем даты текущей недели отсортированные"""
     if not this_day:
         this_day = date.today() # Получаем текущую дату
     week_day = this_day.weekday() + 1 # И день недели
@@ -93,3 +94,18 @@ def is_day_in_activity_days(activity_day_to_db, day):
         if day in act_day:
             return act_day
     return None
+
+
+def convert_date(day):
+    if not day:
+        return False
+    if day == 'False':
+        return False
+    if isinstance(day, datetime.date):
+        print(f"strfday = {day.strftime('%Y-%m-%d')}")
+        return day.strftime('%Y-%m-%d')
+    else:
+        print(f' day  = {day}')
+        temp_day = f'{day} 08:15:27'
+        time = datetime.datetime.strptime(temp_day, '%Y-%m-%d %H:%M:%S')
+        return time.date()

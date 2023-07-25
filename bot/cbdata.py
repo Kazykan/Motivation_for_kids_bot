@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 
@@ -5,6 +6,7 @@ from aiogram.filters.callback_data import CallbackData
 class ChildCallbackFactory(CallbackData, prefix="cb_child"):
     """Префикс — это общая подстрока в начале, по которой фреймворк будет определять, какая структура лежит в колбэке"""
     id: int
+    day: str | bool
 
 
 

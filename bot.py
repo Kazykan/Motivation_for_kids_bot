@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 async def set_commands(bot: Bot):
     commands = [
         BotCommand(command="/start", description="Старт"),
-        BotCommand(command="/food", description="Заказать блюда"),
+        BotCommand(command="/info", description="Описание бота"),
         BotCommand(command="/cancel", description="Отменить текущее действие")
     ]
     await bot.set_my_commands(commands)

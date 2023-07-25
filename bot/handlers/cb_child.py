@@ -15,7 +15,7 @@ sys.path.append("..")
 from bot.keyboards.kb_parent import kb_share_phone
 from bot.cbdata import ActivityChildCallbackFactory
 from db_service.service import activity_to_text, get_child_gender_emoji, valid_number
-from db_service.dbservice import Child_DB, add_parent_and_child, get_child_activity_one, get_child_data, report_table_child
+from db_service.dbservice import Child_DB, add_parent_and_child, report_table_child
 from db_service.pydantic_model import Activity_serialize, Child_serialize_activities
 
 
@@ -33,7 +33,7 @@ def ikb_child_total_info(child_id: int):
 
 def ikb_child_activity_list(child_id: int):
     """Кнопки список заданий ребенка"""
-    child_info = Child_serialize_activities.validate(get_child_data(child_id=child_id))
+    child_info = Child_serialize_activities.validate(Child_DB.get_data(child_id=child_id))
     builder = InlineKeyboardBuilder()
     for activity in child_info.activities:
         builder.button(text=f'{activity.name}',
@@ -54,9 +54,8 @@ class AddChildStatesGroup(StatesGroup):
 async def cb_child_activity_fab(callback: types.CallbackQuery,
                                 callback_data: ActivityChildCallbackFactory) -> None:
     """Подробности про одно задание + отметка о выполнении"""
-    # TODO: Убрать повторение функции 3 строчки вниз
     activity = Activity_serialize.validate(
-        get_child_activity_one(activity_id=int(callback_data.activity_id)))
+        Child_DB.get_activity_one(activity_id=int(callback_data.activity_id)))
     info = activity_to_text(activity)
     await callback.message.edit_text(text=f'<code>{info}\n</code>',
                                         reply_markup=ikb_child_total_info(child_id=activity.child_id))

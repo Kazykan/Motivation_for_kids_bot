@@ -25,7 +25,7 @@ def ikb_parent_children(bot_user_id):
     row = []
     for child in data.children:
         builder.button(text=f'{child.name} {get_child_gender_emoji(child.sex)}',
-            callback_data=ChildCallbackFactory(id=child.id))
+            callback_data=ChildCallbackFactory(id=child.id, day=False))
         row.append(1)
     row.append(2)
     builder.button(text='Доб ребенка 🐰', callback_data='cb_add_child') #TODO: обработать кнопку

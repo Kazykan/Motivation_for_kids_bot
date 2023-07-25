@@ -46,33 +46,6 @@ def add_parent_and_child(info):
     return info_db.serialize
 
 
-def get_child_data(child_id: int):
-    """Данные по ребенку"""
-    child_data = session.query(Child).filter(Child.id == child_id).first()
-    return child_data.serialize_activities
-
-
-def get_child_activity_one(activity_id: int, day=False) -> dict:
-    this_week = get_this_week(this_day=day)
-    activity = session.query(Activity).filter(Activity.id == activity_id).first().serialize
-    activity_days_damp = session.query(
-                        Activity_day.id,
-                        Activity_day.is_done,
-                        Activity_day.day).filter(and_(
-        Activity_day.day.between(this_week[0], this_week[-1]),
-        Activity_day.activity_id == activity_id))
-    activity_days = []
-    for day in activity_days_damp:
-        activity_days.append({'id': day.id,
-                              'is_done': day.is_done,
-                              'day': day.day})
-    activity['activity_days'] = activity_days
-    return activity
-
-
-pprint.pprint(get_child_activity_one(activity_id=1))
-
-
 def get_child_activities(child_id: int):
     """Данные по заданиям"""
     child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
@@ -81,8 +54,13 @@ def get_child_activities(child_id: int):
         activity_data.append(data.serialize)
     return activity_data
 
-def child_activity_by_day(activity_day_id: int) -> list:
-    days = session.query(Activity_day.is_done, Activity_day.day).filter(Activity_day.activity_id == activity_day_id).all()
+def child_activity_by_day(activity_day_id: int, day=False) -> list:
+    week_days = get_this_week(this_day=day)
+    days = get_activity_days_between_dates(
+        activity_day_id=activity_day_id,
+        start_date=week_days[0],
+        end_date=week_days[-1]
+    )
     weeks = ['-', '-', '-', '-', '-', '-', '-']
     for day in days:
         if day.is_done:
@@ -93,20 +71,6 @@ def child_activity_by_day(activity_day_id: int) -> list:
         weeks[week] = is_done
     weeks.insert(5, ' ')
     return [''.join(weeks)]
-
-
-def add_activity(info):
-    activity = Activity(
-        name=info.name,
-        title=info.title,
-        percent_complete=info.percent_complete,
-        cost=info.cost,
-        max_cost=info.cost,
-        child_id=info.child_id
-    )
-    session.add(activity)
-    session.commit()
-    return activity.serialize
 
 
 def get_weeks_list_for_activities(activity_id):
@@ -171,7 +135,7 @@ def change_to_current_weeks_task(activity_id):
     ))
     act_week_day = session.execute(stmt).scalars().all()  # Получаем какие дни недели выбраны [1, 3, 5, 6]
     current_week = get_this_week()  # [datetime.date(2023, 7, 17), datetime.date(2023, 7, 18), ...]
-    activity_day_to_db = get_activity_days_to_week(activity_id=activity_id,
+    activity_day_to_db = get_activity_days_between_dates(activity_day_id=activity_id,
                                                    start_date=current_week[0],
                                                    end_date=current_week[-1])
     for day in current_week:
@@ -185,32 +149,34 @@ def change_to_current_weeks_task(activity_id):
     return True
 
 
-def get_activity_days_to_week(
-        activity_id: int, start_date: date, end_date: date, count=False):
+def get_activity_days_between_dates(
+        activity_day_id: int, start_date: date, end_date: date, count=False):
     if count:
         activity_days = session.query(Activity_day).filter(and_(
         Activity_day.day.between(start_date, end_date),
-        Activity_day.activity_id == activity_id)).count()
+        Activity_day.activity_id == activity_day_id)).count()
     else:
         activity_days = session.query(Activity_day.id,
                                   Activity_day.day,
                                   Activity_day.is_done).filter(and_(
         Activity_day.day.between(start_date, end_date),
-        Activity_day.activity_id == activity_id
+        Activity_day.activity_id == activity_day_id
     ))
     return activity_days
 
 
-def report_table_child(info):
+def report_table_child(info, day=False):
     text = f'Ребенок: {info.name}\n\n'
     activity_lst = []
+    weekly_days = get_this_week(this_day=day)
     for activity in info.activities:
-        weeks_activity = child_activity_by_day(activity.id)
+        weeks_activity = child_activity_by_day(activity.id, day=day)
         weekly_total_payout = get_weekly_total_payout(
             activity_id=activity.id,
-            day=date.today(), cost=activity.cost)
+            day=day, cost=activity.cost)
         lst = [activity.name, weekly_total_payout]
         activity_lst.append(lst + weeks_activity)
+    text += f'Неделя: c {weekly_days[0].strftime("%d %b")} по {weekly_days[-1].strftime("%d %b")}\n'
     total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
     return text + table + total_payout
@@ -218,10 +184,10 @@ def report_table_child(info):
 
 def get_weekly_total_payout(activity_id, day, cost):
     current_week = get_this_week(this_day=day)
-    activity_day_to_db = get_activity_days_to_week(activity_id=activity_id,
+    activity_day_to_db = get_activity_days_between_dates(activity_day_id=activity_id,
                                                 start_date=current_week[0],
                                                 end_date=current_week[-1])
-    count = get_activity_days_to_week(activity_id=activity_id,
+    count = get_activity_days_between_dates(activity_day_id=activity_id,
                                                 start_date=current_week[0],
                                                 end_date=current_week[-1], count=True)
     try:
@@ -249,11 +215,6 @@ def delete_activity_day(activity_day_id):
     activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
     session.delete(activity_day)
     session.commit()
-
-
-def get_parent_bot_user_id_is_active():
-    parents_id = session.query(Parent.bot_user_id).all()
-    return parents_id
 
 
 class Parent_DB:
@@ -293,6 +254,12 @@ class Parent_DB:
         ))
         all_parent_id = session.execute(stmt).scalars().all()
         return all_parent_id
+
+    @staticmethod
+    def get_bot_user_id_is_active():
+        parents_id = session.query(Parent.bot_user_id).all()
+        return parents_id
+
 
 
 class Child_DB:
@@ -360,3 +327,59 @@ class Child_DB:
         ))
         one_child_id = session.execute(stmt).scalars().first()
         return one_child_id
+    
+    @staticmethod
+    def get_activity_one(activity_id: int, day=False) -> dict:
+        this_week = get_this_week(this_day=day)
+        activity = session.query(Activity).filter(Activity.id == activity_id).first().serialize
+        activity_days_damp = session.query(
+                            Activity_day.id,
+                            Activity_day.is_done,
+                            Activity_day.day).filter(and_(
+            Activity_day.day.between(this_week[0], this_week[-1]),
+            Activity_day.activity_id == activity_id))
+        activity_days = []
+        for day in activity_days_damp:
+            activity_days.append({'id': day.id,
+                                'is_done': day.is_done,
+                                'day': day.day})
+        activity['activity_days'] = activity_days
+        return activity
+
+    @staticmethod
+    def get_data(child_id: int):
+        """Данные по ребенку"""
+        child_data = session.query(Child).filter(Child.id == child_id).first()
+        return child_data.serialize_activities
+
+class Activity_DB():
+
+    @staticmethod
+    def add_activity(info):
+        activity = Activity(
+            name=info.name,
+            title=info.title,
+            percent_complete=info.percent_complete,
+            cost=info.cost,
+            max_cost=info.cost,
+            child_id=info.child_id
+        )
+        session.add(activity)
+        session.commit()
+        return activity.serialize
+
+class Activity_day_DB():
+
+    @staticmethod
+    def is_previous_week(child_id: int, day):
+        this_week = get_this_week(this_day=day)
+        activity_day = session.query(Activity_day).filter(and_(
+            Activity.child_id == child_id,
+            Activity_day.activity_id == Activity.id,
+            Activity_day.day.between(this_week[0], this_week[-1]),
+        )).first()
+        return activity_day
+
+data = Activity_day_DB.is_previous_week(child_id=1, day=False)
+if data:
+    pprint.pprint(f'{data} *******')
