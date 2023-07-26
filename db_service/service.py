@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 from db_service.pydantic_model import Activity_serialize
 
-locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+# locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 def valid_number(number: str):

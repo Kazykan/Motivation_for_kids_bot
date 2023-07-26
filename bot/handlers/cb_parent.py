@@ -11,9 +11,9 @@ sys.path.append("..")
 from bot.statesgroup import AddParentStatesGroup
 from bot.keyboards.kb_general import ikb_gender
 from bot.keyboards.kb_parent import ikb_parent_children, kb_share_phone
-from bot.cbdata import GenderCallbackFactory
+from bot.cbdata import GenderCFactory
 from db_service.service import get_child_gender_emoji, valid_number
-from db_service.dbservice import Parent_DB, add_parent_and_child, is_parent_in_db
+from db_service.dbservice import ParentDB, add_parent_and_child, is_parent_in_db
 from db_service.pydantic_model import Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 
@@ -56,7 +56,7 @@ async def cb_add_parent_number(message: types.Message, state: FSMContext) -> Non
     if fullname == '':
         pass # TODO: Опросник если имя не распознано
     phone_number = valid_number(contact.phone_number)
-    parent = Parent_DB.get_or_update_data_by_phone_number(phone_number=phone_number, bot_user_id=message.from_user.id)
+    parent = ParentDB.get_or_update_data_by_phone_number(phone_number=phone_number, bot_user_id=message.from_user.id)
     if parent:  # Если номер телефона есть в БД
         await message.answer(
             text='Выберите ребенка',
@@ -74,9 +74,9 @@ async def cb_add_parent_number(message: types.Message, state: FSMContext) -> Non
         await state.set_state(AddParentStatesGroup.gender)
 
 
-@router.callback_query(GenderCallbackFactory.filter(), AddParentStatesGroup.gender)
+@router.callback_query(GenderCFactory.filter(), AddParentStatesGroup.gender)
 async def cb_add_parent_gender(callback: types.CallbackQuery,
-                               callback_data: GenderCallbackFactory,
+                               callback_data: GenderCFactory,
                                state: FSMContext) -> None:
     """Добавление данных родителя - 3 этап пол родителя"""
     await state.update_data(sex=int(callback_data.gender)) # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
@@ -103,9 +103,9 @@ async def cb_add_parent_child_name(message: types.Message, state: FSMContext) ->
     await state.set_state(AddParentStatesGroup.child_gender)
 
 
-@router.callback_query(GenderCallbackFactory.filter(), AddParentStatesGroup.child_gender)
+@router.callback_query(GenderCFactory.filter(), AddParentStatesGroup.child_gender)
 async def cb_add_parent_child_gender(callback: types.CallbackQuery,
-                               callback_data: GenderCallbackFactory,
+                               callback_data: GenderCFactory,
                                state: FSMContext) -> None:
     """Добавление данных родителя - 6 этап пол ребенка"""
     await state.update_data(child_sex=int(callback_data.gender)) # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable

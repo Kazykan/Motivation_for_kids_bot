@@ -3,39 +3,44 @@ from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 
 
-class ChildCallbackFactory(CallbackData, prefix="cb_child"):
+class BaseChildCFactory(CallbackData, prefix="cb_child"):
     """Префикс — это общая подстрока в начале, по которой фреймворк будет определять, какая структура лежит в колбэке"""
     id: int
     day: str | bool
 
 
+class ChildInfoCallbackFactory(CallbackData, prefix="cb_child_info"):
+    id: int
+    day: str | bool
 
-class ActivityCallbackFactory(CallbackData, prefix='cb_activity'):
+
+
+class ActivityCFactory(CallbackData, prefix='cb_activity'):
     activity_id: int
     tick: str
 
 
-class ActivityChildCallbackFactory(CallbackData, prefix='cb_activity_child'):
+class ActivityChildCFactory(CallbackData, prefix='cb_activity_child'):
     activity_id: int
 
 
-class TickChangeActivityCallbackFactory(CallbackData, prefix='cb_activity_edit'):
+class TickChangeActivityCFactory(CallbackData, prefix='cb_activity_edit'):
     activity_day_id: int
 
 
-class DeleteActivityCallbackFactory(CallbackData, prefix='cb_activity_delete'):
+class DeleteActivityCFactory(CallbackData, prefix='cb_activity_delete'):
     activity_id: int
 
 
-class AddActivityCallbackFactory(CallbackData, prefix='cb_add_activity'):
+class AddActivityCFactory(CallbackData, prefix='cb_add_activity'):
     child_id: int
 
 
-class ChangeOneWeekOnActivityCallbackFactory(CallbackData, prefix='cb_week_activity'):
+class ChangeOneWeekOnActivityCFactory(CallbackData, prefix='cb_week_activity'):
     week_id: int
     activity_id: int
     edit: bool
 
 
-class GenderCallbackFactory(CallbackData, prefix='cb_gender'):
+class GenderCFactory(CallbackData, prefix='cb_gender'):
     gender: int

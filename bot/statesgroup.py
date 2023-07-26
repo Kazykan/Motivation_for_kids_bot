@@ -10,7 +10,7 @@ class AddParentStatesGroup(StatesGroup):
     child_gender = State()
 
 
-class AddOneMoreParentStatesGroup(StatesGroup):
+class AddOneMoreParentSGroup(StatesGroup):
     """Машина состояний для работы опросника по добавлению еще одного Родителя"""
     parent_name = State()
     gender = State()

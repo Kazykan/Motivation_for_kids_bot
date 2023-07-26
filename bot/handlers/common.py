@@ -14,6 +14,7 @@ router = Router()
 @router.message(Command('start'))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()  # Clear FSM
+    
     await message.answer('Добро пожаловать!\n', reply_markup=types.ReplyKeyboardRemove())
     await message.answer(
         "В телеграмм бот Мотивация!\nВыберите кто вы?",

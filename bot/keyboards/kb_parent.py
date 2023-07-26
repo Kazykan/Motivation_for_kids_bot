@@ -1,7 +1,7 @@
 
 from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from bot.cbdata import ChildCallbackFactory
+from bot.cbdata import BaseChildCFactory
 from db_service.dbservice import is_parent_in_db
 from db_service.pydantic_model import Parent_base_and_child
 from db_service.service import get_child_gender_emoji
@@ -25,7 +25,7 @@ def ikb_parent_children(bot_user_id):
     row = []
     for child in data.children:
         builder.button(text=f'{child.name} {get_child_gender_emoji(child.sex)}',
-            callback_data=ChildCallbackFactory(id=child.id, day=False))
+            callback_data=BaseChildCFactory(id=child.id, day=False))
         row.append(1)
     row.append(2)
     builder.button(text='Доб ребенка 🐰', callback_data='cb_add_child') #TODO: обработать кнопку

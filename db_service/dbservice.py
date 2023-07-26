@@ -5,12 +5,12 @@ import math, pprint
 
 sys.path.append(".")
 from db_service.pydantic_model import Activity_days_list, Child_Base
-from db_service.service import get_this_week, is_day_in_activity_days
+from db_service.service import convert_date, get_this_week, is_day_in_activity_days
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
     child_mtm_parent, activity_mtm_week
 from sqlalchemy import select, and_
 
-locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+# locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 def is_parent_in_db(bot_user_id: int):
@@ -217,7 +217,7 @@ def delete_activity_day(activity_day_id):
     session.commit()
 
 
-class Parent_DB:
+class ParentDB:
     
     @staticmethod
     def add_one_more_parent(data):
@@ -262,7 +262,7 @@ class Parent_DB:
 
 
 
-class Child_DB:
+class ChildDB:
 
     @staticmethod
     def add_child(data: Child_Base, all_parent_id: list):
@@ -352,7 +352,7 @@ class Child_DB:
         child_data = session.query(Child).filter(Child.id == child_id).first()
         return child_data.serialize_activities
 
-class Activity_DB():
+class ActivityDB():
 
     @staticmethod
     def add_activity(info):
@@ -368,7 +368,7 @@ class Activity_DB():
         session.commit()
         return activity.serialize
 
-class Activity_day_DB():
+class ActivityDayDB():
 
     @staticmethod
     def is_previous_week(child_id: int, day):
@@ -379,3 +379,27 @@ class Activity_day_DB():
             Activity_day.day.between(this_week[0], this_week[-1]),
         )).first()
         return activity_day
+
+
+def get_navigation_arrows_by_days_of_week(child_id, day):
+    """Проверяем есть активности по предыдущей неделе у ребенка, если есть добавляем список кнопок"""
+    buttons = []
+    if day == 'False' or day == False:
+        day = date.today()
+    else:
+        day = convert_date(day=day)
+    previous_week = ActivityDayDB.is_previous_week(child_id=child_id, day=(day - timedelta(days=7)))
+    next_week = ActivityDayDB.is_previous_week(child_id=child_id, day=(day + timedelta(days=7)))
+    previous_week_str = convert_date(day - timedelta(days=7))
+    next_week_str = convert_date(day + timedelta(days=7))
+    if previous_week and next_week:
+        buttons.append({'text': '⬅️ previous week', 'day': previous_week_str, 'row': 2})
+        buttons.append({'text': 'next week ➡️', 'day': next_week_str, 'row': 2})
+    else:
+        if previous_week:
+            # Если есть данные по предыдущей неделе добавляем кнопку назад
+            buttons.append({'text': '⬅️ previous week', 'day': previous_week_str, 'row': 1})
+        if next_week:
+            # Если есть данные по следующей неделе добавляем кнопку вперед
+            buttons.append({'text': 'next week ➡️', 'day': next_week_str, 'row': 1})
+    return buttons
