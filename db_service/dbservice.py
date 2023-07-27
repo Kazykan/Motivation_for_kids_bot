@@ -13,15 +13,6 @@ from sqlalchemy import select, and_
 # locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
-def is_parent_in_db(bot_user_id: int):
-    """Поиск в БД есть такой пользователь"""
-    parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()
-    if parent is None:
-        return None
-    else:
-        return parent.serialize
-
-
 def add_parent_and_child(info):
     """Добавление нового родителя и его ребенка + добавление связи м-т-м между ними"""
     parent = Parent(
@@ -46,13 +37,13 @@ def add_parent_and_child(info):
     return info_db.serialize
 
 
-def get_child_activities(child_id: int):
-    """Данные по заданиям"""
-    child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
-    activity_data = []
-    for data in child_data:
-        activity_data.append(data.serialize)
-    return activity_data
+# def get_child_activities(child_id: int):
+#     """Данные по заданиям"""
+#     child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
+#     activity_data = []
+#     for data in child_data:
+#         activity_data.append(data.serialize)
+#     return activity_data
 
 def child_activity_by_day(activity_day_id: int, day=False) -> list:
     week_days = get_this_week(this_day=day)
@@ -82,16 +73,6 @@ def get_weeks_list_for_activities(activity_id):
 def get_activity_day(activity_day_id: int):
     activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
     return activity_day.serialize
-
-
-def change_activity_day_is_done(activity_day_id: int):
-    activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
-    if activity_day.is_done:
-        activity_day.is_done = False
-    else:
-        activity_day.is_done = True
-    session.commit()
-    return True
 
 
 def get_activity_week(activity_id, week_id):
@@ -142,10 +123,10 @@ def change_to_current_weeks_task(activity_id):
         activity_id_to_this_day = is_day_in_activity_days(activity_day_to_db=activity_day_to_db, day=day)
         if (day.weekday() + 1) in act_week_day: # Есть текущий день в расписании
             if not activity_id_to_this_day:  # И его нет в БД, тогда создаем эту запись
-                add_activity_day(activity_id=activity_id, day=day)
+                ActivityDayDB.add(activity_id=activity_id, day=day)
         else:  # Если нет текущего дня в расписании, но он есть в БД - удаляем
             if activity_id_to_this_day:
-                delete_activity_day(activity_day_id=activity_id_to_this_day[0])
+                ActivityDayDB.delete(activity_day_id=activity_id_to_this_day[0])
     return True
 
 
@@ -201,22 +182,6 @@ def get_weekly_total_payout(activity_id, day, cost):
     return total_payout
 
 
-def add_activity_day(activity_id, day):
-    activ = Activity_day(
-    is_done=False,
-    day=day,
-    activity_id=activity_id
-    )
-    session.add(activ)
-    session.commit()
-
-
-def delete_activity_day(activity_day_id):
-    activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
-    session.delete(activity_day)
-    session.commit()
-
-
 class ParentDB:
     
     @staticmethod
@@ -259,6 +224,15 @@ class ParentDB:
     def get_bot_user_id_is_active():
         parents_id = session.query(Parent.bot_user_id).all()
         return parents_id
+    
+    @staticmethod
+    def is_bot_user_id(bot_user_id: int):
+        """Поиск в БД есть такой пользователь"""
+        parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()
+        if parent is None:
+            return None
+        else:
+            return parent.serialize
 
 
 
@@ -379,6 +353,32 @@ class ActivityDayDB():
             Activity_day.day.between(this_week[0], this_week[-1]),
         )).first()
         return activity_day
+    
+    @staticmethod
+    def add(activity_id, day):
+        activ = Activity_day(
+        is_done=False,
+        day=day,
+        activity_id=activity_id
+        )
+        session.add(activ)
+        session.commit()
+    
+    @staticmethod
+    def delete(activity_day_id):
+        activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
+        session.delete(activity_day)
+        session.commit()
+    
+    @staticmethod
+    def change_is_done(activity_day_id: int):
+        activity_day = session.query(Activity_day).filter(Activity_day.id == activity_day_id).first()
+        if activity_day.is_done:
+            activity_day.is_done = False
+        else:
+            activity_day.is_done = True
+        session.commit()
+        return True
 
 
 def get_navigation_arrows_by_days_of_week(child_id, day):

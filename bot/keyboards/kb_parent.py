@@ -2,7 +2,7 @@
 from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot.cbdata import BaseChildCFactory
-from db_service.dbservice import is_parent_in_db
+from db_service.dbservice import ParentDB
 from db_service.pydantic_model import Parent_base_and_child
 from db_service.service import get_child_gender_emoji
 
@@ -19,7 +19,7 @@ def kb_share_phone() -> types.KeyboardButton:
 
 def ikb_parent_children(bot_user_id):
     """Кнопка со списком детей + добавить еще одного ребенка"""
-    parent_data = is_parent_in_db(bot_user_id) # Получем его данные
+    parent_data = ParentDB.is_bot_user_id(bot_user_id) # Получем его данные
     data = Parent_base_and_child.validate(parent_data)
     builder = InlineKeyboardBuilder()
     row = []

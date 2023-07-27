@@ -15,7 +15,7 @@ from bot.keyboards.kb_general import ikb_gender
 from bot.keyboards.kb_parent import ikb_parent_children, kb_share_phone
 from bot.cbdata import BaseChildCFactory, GenderCFactory
 from db_service.service import get_child_gender_emoji, valid_number
-from db_service.dbservice import ChildDB, ParentDB, add_parent_and_child, is_parent_in_db
+from db_service.dbservice import ChildDB, ParentDB, add_parent_and_child
 from db_service.pydantic_model import Child_Base, Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 

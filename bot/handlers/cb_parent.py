@@ -13,7 +13,7 @@ from bot.keyboards.kb_general import ikb_gender
 from bot.keyboards.kb_parent import ikb_parent_children, kb_share_phone
 from bot.cbdata import GenderCFactory
 from db_service.service import get_child_gender_emoji, valid_number
-from db_service.dbservice import ParentDB, add_parent_and_child, is_parent_in_db
+from db_service.dbservice import ParentDB, add_parent_and_child
 from db_service.pydantic_model import Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 
@@ -31,7 +31,7 @@ def ikb_parent() -> types.InlineKeyboardButton:
 @router.callback_query(Text('cb_parent'))
 async def cb_add_parent(callback: types.CallbackQuery, state: FSMContext) -> None:
     """Первый пункт опросника по регистрации ребенка"""
-    parent_data = is_parent_in_db(int(callback.from_user.id)) # Получем его данные
+    parent_data = ParentDB.is_bot_user_id(int(callback.from_user.id)) # Получем его данные
     if parent_data is None:  # если родителя нет, то добавляем
         await callback.message.answer(text="Для работы бота нужен Ваш номер телефона",
                                   reply_markup=kb_share_phone())

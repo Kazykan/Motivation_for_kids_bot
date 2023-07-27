@@ -10,7 +10,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 sys.path.append("..")
 from bot.statesgroup import AddActivityStatesGroup
 from bot.cbdata import ActivityCFactory, AddActivityCFactory, BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, ChangeOneWeekOnActivityCFactory
-from db_service.dbservice import ActivityDB, ChildDB, add_activity_week, change_activity_day_is_done, delete_activity_week, get_activity_day, get_activity_week, get_navigation_arrows_by_days_of_week
+from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, add_activity_week, delete_activity_week, get_activity_day, get_activity_week, get_navigation_arrows_by_days_of_week
 from db_service.pydantic_model import Activity_day_serializer, Activity_serialize, Child_serialize_activities, Activity_base
 from db_service.service import activity_to_text, convert_date, is_weekday_on, get_child_gender_emoji
 from db_service.dbservice import get_weeks_list_for_activities, report_table_child
@@ -92,7 +92,7 @@ async def cb_tick_change_activity_fab(callback: types.CallbackQuery,
                     ) -> None:
     """ Изменения статуса выполнения задания по дням"""
     try:
-        change_activity_day_is_done(activity_day_id=int(callback_data.activity_day_id))
+        ActivityDayDB.change_is_done(activity_day_id=int(callback_data.activity_day_id))
         # TODO: Убрать лишний запрос снизу
         activity_day = Activity_day_serializer.validate(
             get_activity_day(activity_day_id=callback_data.activity_day_id))

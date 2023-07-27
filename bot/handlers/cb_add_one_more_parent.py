@@ -13,7 +13,7 @@ from bot.keyboards.kb_general import ikb_gender
 from bot.keyboards.kb_parent import ikb_parent_children
 from bot.cbdata import GenderCFactory
 from db_service.service import valid_number
-from db_service.dbservice import ChildDB, ParentDB, is_parent_in_db
+from db_service.dbservice import ChildDB, ParentDB
 
 
 router = Router()
@@ -50,7 +50,7 @@ async def cb_add_one_more_parent_phone(message: types.Message, state: FSMContext
     """Добавление данных родителя - 4 этап номер телефона родителя"""
     parent_number = valid_number(message.text)
     if parent_number:
-        parent_data = is_parent_in_db(int(message.from_user.id)) # Получем его данные
+        parent_data = ParentDB.is_bot_user_id(int(message.from_user.id)) # Получем его данные
         all_children_id = ChildDB.get_all_children_id(parent_id=parent_data['id'])
         await state.update_data(phone=parent_number)
         await state.update_data(all_children_id=all_children_id)
