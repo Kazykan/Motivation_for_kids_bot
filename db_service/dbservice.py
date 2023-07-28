@@ -106,7 +106,7 @@ def delete_activity_week(activity_id, week_id):
     return True
 
 
-def change_to_current_weeks_task(activity_id):
+def change_to_current_weeks_task(activity_id, day=False):
     """Обновление заданий в текущей неделе, смотри расписание
     по активным дням недели и добавляем задания или удаляем их"""
     stmt = select(Week.id).where(and_(
@@ -115,15 +115,15 @@ def change_to_current_weeks_task(activity_id):
         Week.id == activity_mtm_week.c.week_id
     ))
     act_week_day = session.execute(stmt).scalars().all()  # Получаем какие дни недели выбраны [1, 3, 5, 6]
-    current_week = get_this_week()  # [datetime.date(2023, 7, 17), datetime.date(2023, 7, 18), ...]
+    current_week = get_this_week(this_day=day)  # [datetime.date(2023, 7, 17), datetime.date(2023, 7, 18), ...]
     activity_day_to_db = get_activity_days_between_dates(activity_day_id=activity_id,
                                                    start_date=current_week[0],
                                                    end_date=current_week[-1])
-    for day in current_week:
-        activity_id_to_this_day = is_day_in_activity_days(activity_day_to_db=activity_day_to_db, day=day)
-        if (day.weekday() + 1) in act_week_day: # Есть текущий день в расписании
+    for day_of_week in current_week:
+        activity_id_to_this_day = is_day_in_activity_days(activity_day_to_db=activity_day_to_db, day=day_of_week)
+        if (day_of_week.weekday() + 1) in act_week_day: # Есть текущий день в расписании
             if not activity_id_to_this_day:  # И его нет в БД, тогда создаем эту запись
-                ActivityDayDB.add(activity_id=activity_id, day=day)
+                ActivityDayDB.add(activity_id=activity_id, day=day_of_week)
         else:  # Если нет текущего дня в расписании, но он есть в БД - удаляем
             if activity_id_to_this_day:
                 ActivityDayDB.delete(activity_day_id=activity_id_to_this_day[0])
@@ -329,7 +329,7 @@ class ChildDB:
 class ActivityDB():
 
     @staticmethod
-    def add_activity(info):
+    def add(info):
         activity = Activity(
             name=info.name,
             title=info.title,
@@ -341,6 +341,12 @@ class ActivityDB():
         session.add(activity)
         session.commit()
         return activity.serialize
+    
+    @staticmethod
+    def get_all_id():
+        activities = session.query(Activity.id).all()
+        return activities
+
 
 class ActivityDayDB():
 

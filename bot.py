@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.handlers import common, cb_parent, cb_child_activity, cb_child, cb_add_one_more_parent,\
     cb_add_child
 
-from bot.handlers.apshed import send_message_cron_middleware
+from bot.handlers.apshed import create_activity_days_for_next_week, send_message_cron_middleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from conf import TELEGRAM_TOKEN
@@ -40,6 +40,7 @@ async def main():
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
     scheduler.add_job(send_message_cron_middleware, 'cron', hour=10, minute=47, kwargs={'bot': bot})
+    scheduler.add_job(create_activity_days_for_next_week, 'cron', day_of_week=6, hour=23, minute=30, kwargs={'bot': bot})
 
 
     dp.include_router(common.router)

@@ -198,7 +198,7 @@ async def child_add_activity_cost(message: types.Message, state: FSMContext) -> 
     data = await state.get_data()  # получаем новые данные в state
     try:
         info = Activity_base.validate(data)
-        activity = Activity_serialize.validate(ActivityDB.add_activity(info))  # Создаем Активность и получаем ее данные
+        activity = Activity_serialize.validate(ActivityDB.add(info))  # Создаем Активность и получаем ее данные
         await message.answer(f"<code>{activity_to_text(activity)}</code>"
             f"Выберите дни недели для задания"
             f"<b> ВНИМАНИЕ !!! </b> Изменения приведут к обнулению отметок в текущей неделе",
