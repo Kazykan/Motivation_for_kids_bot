@@ -28,9 +28,16 @@ async def set_commands(bot: Bot):
 
 async def main():
 
+    # logging.basicConfig(
+    #     level=logging.INFO,
+    #     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    # )
+    # logger.error("Starting bot")
+
+
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        level=logging.WARNING,
+        format=u"%(filename)s[LINE:%(lineno)d]# %(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
     logger.error("Starting bot")
 
@@ -39,7 +46,7 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
-    scheduler.add_job(send_message_cron_middleware, 'cron', hour=10, minute=47, kwargs={'bot': bot})
+    scheduler.add_job(send_message_cron_middleware, 'cron', hour=19, minute=4, kwargs={'bot': bot})
     scheduler.add_job(create_activity_days_for_next_week, 'cron', day_of_week=6, hour=23, minute=30, kwargs={'bot': bot})
 
 

@@ -325,6 +325,11 @@ class ChildDB:
         """Данные по ребенку"""
         child_data = session.query(Child).filter(Child.id == child_id).first()
         return child_data.serialize_activities
+    
+    @staticmethod
+    def get_all_with_bot_user_id():
+        children_id = session.query(Child.id, Child.bot_user_id, Child.name).filter(Child.bot_user_id != None).all()
+        return children_id
 
 class ActivityDB():
 
@@ -385,7 +390,18 @@ class ActivityDayDB():
             activity_day.is_done = True
         session.commit()
         return True
-
+    
+    @staticmethod
+    def get_all_activity_for_day(child_id, day):
+        activities = session.query(Activity.name).filter(and_(
+            Activity.child_id == child_id,
+            Activity_day.activity_id == Activity.id,
+            Activity_day.day == day
+        ))
+        if activities.count() == 0:
+            return False
+        else:
+            return activities
 
 def get_navigation_arrows_by_days_of_week(child_id, day):
     """Проверяем есть активности по предыдущей неделе у ребенка, если есть добавляем список кнопок"""
