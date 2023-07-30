@@ -9,10 +9,14 @@ class BaseChildCFactory(CallbackData, prefix="cb_child"):
     day: str | bool
 
 
-class ChildInfoCallbackFactory(CallbackData, prefix="cb_child_info"):
+class ChildInfoCFactory(CallbackData, prefix="cb_child_info"):
     id: int
     day: str | bool
 
+
+class ActivityDayCompletionNotificationCFactory(CallbackData, prefix="cb_activity_day_completion"):
+    child_id: int
+    activity_day_id: int
 
 
 class ActivityCFactory(CallbackData, prefix='cb_activity'):

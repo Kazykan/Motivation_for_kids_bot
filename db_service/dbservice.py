@@ -4,6 +4,7 @@ from datetime import date, timedelta
 import math, pprint
 
 sys.path.append(".")
+from db_service.matplot_diagram import get_diagram_image
 from db_service.pydantic_model import Activity_days_list, Child_Base
 from db_service.service import convert_date, get_this_week, is_day_in_activity_days
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
@@ -150,13 +151,19 @@ def report_table_child(info, day=False):
     text = f'Ребенок: {info.name}\n\n'
     activity_lst = []
     weekly_days = get_this_week(this_day=day)
+    vals_diagram = []
+    lables_diagram = []
     for activity in info.activities:
         weeks_activity = child_activity_by_day(activity.id, day=day)
         weekly_total_payout = get_weekly_total_payout(
             activity_id=activity.id,
             day=day, cost=activity.cost)
+        vals_diagram.append(weekly_total_payout)
+        lables_diagram.append(activity.name)
         lst = [activity.name, weekly_total_payout]
         activity_lst.append(lst + weeks_activity)
+    if vals_diagram:
+        get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=info.bot_user_id)
     text += f'Неделя: c {weekly_days[0].strftime("%d %b")} по {weekly_days[-1].strftime("%d %b")}\n'
     total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
@@ -235,7 +242,6 @@ class ParentDB:
             return parent.serialize
 
 
-
 class ChildDB:
 
     @staticmethod
@@ -278,8 +284,7 @@ class ChildDB:
             return None
         else:
             return child.serialize_activities
-        
-    
+            
     @staticmethod
     def get_all_children_id(parent_id: int) -> list:
         """ Список id всех родителей"""
@@ -393,6 +398,7 @@ class ActivityDayDB():
     
     @staticmethod
     def get_all_activity_for_day(child_id, day):
+        """Получить все активности на определенный день"""
         activities = session.query(Activity.name).filter(and_(
             Activity.child_id == child_id,
             Activity_day.activity_id == Activity.id,
@@ -402,6 +408,20 @@ class ActivityDayDB():
             return False
         else:
             return activities
+
+    @staticmethod
+    def there_is_for_today(activity_id, day=False):
+        if not day:
+            day = date.today()
+        activity_day = session.query(Activity_day.id).filter(and_(
+            Activity_day.activity_id == activity_id,
+            Activity_day.day == day
+        ))
+        if activity_day.count() == 0:
+            return False
+        else:
+            return activity_day[0][0]
+
 
 def get_navigation_arrows_by_days_of_week(child_id, day):
     """Проверяем есть активности по предыдущей неделе у ребенка, если есть добавляем список кнопок"""
@@ -425,3 +445,4 @@ def get_navigation_arrows_by_days_of_week(child_id, day):
             # Если есть данные по следующей неделе добавляем кнопку вперед
             buttons.append({'text': 'next week ➡️', 'day': next_week_str, 'row': 1})
     return buttons
+

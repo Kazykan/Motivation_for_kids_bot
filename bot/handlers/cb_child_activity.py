@@ -5,6 +5,7 @@ import sys
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InputFile
 
 
 sys.path.append("..")
@@ -131,7 +132,8 @@ async def cb_child_info_fab(callback: types.CallbackQuery,
     await callback.message.edit_text(text=f'<code>{info}\n</code>\n'
         f'Список заданий {get_child_gender_emoji(child_info.sex)} {child_info.name}',
         reply_markup=ikb_child_menu(child_id=int(callback_data.id), day=callback_data.day))
-
+    photo = InputFile("1164470729.png")
+    await callback.message.answer_photo(photo=photo)
 
 @router.callback_query(AddActivityCFactory.filter())
 async def cb_child_add_activity(callback: types.CallbackQuery,
