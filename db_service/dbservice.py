@@ -162,8 +162,8 @@ def report_table_child(info, day=False):
         lables_diagram.append(activity.name)
         lst = [activity.name, weekly_total_payout]
         activity_lst.append(lst + weeks_activity)
-    if vals_diagram:
-        get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=info.bot_user_id)
+    # if vals_diagram:  #TODO: Проверить работу
+    #     get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=info.bot_user_id)
     text += f'Неделя: c {weekly_days[0].strftime("%d %b")} по {weekly_days[-1].strftime("%d %b")}\n'
     total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
@@ -233,6 +233,17 @@ class ParentDB:
         return parents_id
     
     @staticmethod
+    def get_all_bot_users_id(child_id: int) -> list:
+        stmt = select(Parent.bot_user_id).where(and_(
+            Parent.bot_user_id != None,
+            Child.id == child_id,
+            Parent.id == child_mtm_parent.c.parent_id,
+            Child.id == child_mtm_parent.c.child_id
+        ))
+        all_parent_bot_user_id = session.execute(stmt).scalars().all()
+        return all_parent_bot_user_id
+
+    @staticmethod
     def is_bot_user_id(bot_user_id: int):
         """Поиск в БД есть такой пользователь"""
         parent = session.query(Parent).filter(Parent.bot_user_id == bot_user_id).first()
@@ -258,7 +269,6 @@ class ChildDB:
             parent_ph.children.append(child)
             session.commit()
         return child.serialize
-
 
     @staticmethod
     def update(child_id: int, bot_user_id: int):
@@ -332,9 +342,15 @@ class ChildDB:
         return child_data.serialize_activities
     
     @staticmethod
+    def get_name(child_id: int):
+        child_name = session.query(Child.name).filter(Child.id == child_id).first()
+        return child_name[0]
+    
+    @staticmethod
     def get_all_with_bot_user_id():
         children_id = session.query(Child.id, Child.bot_user_id, Child.name).filter(Child.bot_user_id != None).all()
         return children_id
+
 
 class ActivityDB():
 
@@ -411,6 +427,7 @@ class ActivityDayDB():
 
     @staticmethod
     def there_is_for_today(activity_id, day=False):
+        """Есть эта активность на этот день"""
         if not day:
             day = date.today()
         activity_day = session.query(Activity_day.id).filter(and_(
@@ -421,6 +438,13 @@ class ActivityDayDB():
             return False
         else:
             return activity_day[0][0]
+    
+    @staticmethod
+    def get_activity_name(activity_day_id):
+        activity = session.query(Activity.name).filter(and_(
+            Activity.id == Activity_day.activity_id,
+            Activity_day.id == activity_day_id)).first()
+        return activity[0]
 
 
 def get_navigation_arrows_by_days_of_week(child_id, day):

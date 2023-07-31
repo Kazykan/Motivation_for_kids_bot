@@ -25,8 +25,9 @@ async def set_commands(bot: Bot):
     ]
     await bot.set_my_commands(commands)
 
+my_bot = Bot(token=TELEGRAM_TOKEN, parse_mode="HTML")
 
-async def main():
+async def main(bot):
 
     # logging.basicConfig(
     #     level=logging.INFO,
@@ -42,7 +43,6 @@ async def main():
     logger.error("Starting bot")
 
 
-    bot = Bot(token=TELEGRAM_TOKEN, parse_mode="HTML")
     dp = Dispatcher(storage=MemoryStorage())
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
@@ -66,6 +66,6 @@ async def main():
 
 if __name__ == '__main__':
     try:
-        asyncio.run(main())
+        asyncio.run(main(bot=my_bot))
     except (KeyboardInterrupt, SystemExit):
         logger.error('Bot stopped!')

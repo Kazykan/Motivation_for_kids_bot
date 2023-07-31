@@ -8,12 +8,13 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 sys.path.append("..")
+from tg_bot import my_bot
 from bot.statesgroup import AddParentStatesGroup
 from bot.keyboards.kb_general import ikb_gender
 from bot.keyboards.kb_parent import ikb_parent_children, kb_share_phone
-from bot.cbdata import GenderCFactory
+from bot.cbdata import ActivityDayCompletionNotificationCFactory, GenderCFactory
 from db_service.service import get_child_gender_emoji, valid_number
-from db_service.dbservice import ParentDB, add_parent_and_child
+from db_service.dbservice import ActivityDayDB, ChildDB, ParentDB, add_parent_and_child
 from db_service.pydantic_model import Parent_and_child, Parent_base_and_child, Children_in_parent_base
 
 
@@ -26,6 +27,23 @@ def ikb_parent() -> types.InlineKeyboardButton:
     builder.button(text='Продолжить', callback_data='cb_parent')
     builder.adjust(1)
     return builder.as_markup()
+
+
+@router.callback_query(ActivityDayCompletionNotificationCFactory.filter())
+async def cb_notification_completion_of_activity_day(
+    callback: types.CallbackQuery,
+    callback_data: ActivityDayCompletionNotificationCFactory):
+    """Отправка сообщений о выполнении задания ребенком с информацией о задании и кнопкой подтверждения"""
+    activity_name = ActivityDayDB.get_activity_name(activity_day_id=callback_data.activity_day_id)
+    parents_bot_user_id = ParentDB.get_all_bot_users_id(child_id=callback_data.child_id)
+    child_name = ChildDB.get_name(child_id=callback_data.child_id)
+    try:
+        for one_id in parents_bot_user_id:
+            await my_bot.send_message(one_id, text=f'{child_name}, просит подтвердить выполнения задания - {activity_name}')
+    except:
+        pass
+    await callback.message.edit_text(text='Уведомление отправлено')
+
 
 
 @router.callback_query(Text('cb_parent'))
