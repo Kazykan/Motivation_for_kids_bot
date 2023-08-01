@@ -17,6 +17,7 @@ class ChildInfoCFactory(CallbackData, prefix="cb_child_info"):
 class ActivityDayCompletionNotificationCFactory(CallbackData, prefix="cb_activity_day_completion"):
     child_id: int
     activity_day_id: int
+    parent: str
 
 
 class ActivityCFactory(CallbackData, prefix='cb_activity'):

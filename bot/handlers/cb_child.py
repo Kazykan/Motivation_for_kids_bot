@@ -41,7 +41,8 @@ def ikb_child_completion_notification_for_parents(child_id: int, activity_day_id
     builder.button(text=f'🆗 я выполнил это задние',
                    callback_data=ActivityDayCompletionNotificationCFactory(
         child_id=child_id,
-        activity_day_id=activity_day_id))
+        activity_day_id=activity_day_id,
+        parent='no'))
     builder.button(text='🔙 Назад',
             callback_data=ChildInfoCFactory(id=child_id, day='False'))
     builder.adjust(1)
