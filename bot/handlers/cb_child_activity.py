@@ -5,16 +5,16 @@ import sys
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InputFile
+from aiogram.types import FSInputFile
 
 
 sys.path.append("..")
 from bot.statesgroup import AddActivityStatesGroup
 from bot.cbdata import ActivityCFactory, AddActivityCFactory, BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, ChangeOneWeekOnActivityCFactory
-from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, add_activity_week, delete_activity_week, get_activity_day, get_activity_week, get_navigation_arrows_by_days_of_week
+from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, add_activity_week, delete_activity_week, report_table_child, get_activity_day, get_activity_week, get_navigation_arrows_by_days_of_week
 from db_service.pydantic_model import Activity_day_serializer, Activity_serialize, Child_serialize_activities, Activity_base
 from db_service.service import activity_to_text, convert_date, is_weekday_on, get_child_gender_emoji
-from db_service.dbservice import get_weeks_list_for_activities, report_table_child
+from db_service.dbservice import get_weeks_list_for_activities
 
 
 router = Router()
@@ -126,14 +126,19 @@ async def cb_child_activity_fab(callback: types.CallbackQuery,
 async def cb_child_info_fab(callback: types.CallbackQuery,
                             callback_data: BaseChildCFactory) -> None:
     """Список заданий ребенка с возможностью удалить или добавить задания"""
+    file_ids = []
     # TODO: Добавить проверку доступа родителя к этому ребенку
     child_info = Child_serialize_activities.validate(ChildDB.get_data(child_id=callback_data.id))
-    info = report_table_child(child_info, day=convert_date(callback_data.day))
+    info = report_table_child(child_id=callback_data.id, day=convert_date(callback_data.day))
     await callback.message.edit_text(text=f'<code>{info}\n</code>\n'
         f'Список заданий {get_child_gender_emoji(child_info.sex)} {child_info.name}',
         reply_markup=ikb_child_menu(child_id=int(callback_data.id), day=callback_data.day))
-    photo = InputFile("1164470729.png")
-    await callback.message.answer_photo(photo=photo)
+    image_from_pc = FSInputFile("1164470729.png")
+    result = await callback.message.answer_photo(
+        image_from_pc,
+        caption="Изображение из файла на компьютере"
+    )
+    file_ids.append(result.photo[-1].file_id)
 
 @router.callback_query(AddActivityCFactory.filter())
 async def cb_child_add_activity(callback: types.CallbackQuery,

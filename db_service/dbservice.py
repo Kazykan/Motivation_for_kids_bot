@@ -5,7 +5,7 @@ import math, pprint
 
 sys.path.append(".")
 from db_service.matplot_diagram import get_diagram_image
-from db_service.pydantic_model import Activity_days_list, Child_Base
+from db_service.pydantic_model import Activity_days_list, Child_Base, Child_serialize_activities
 from db_service.service import convert_date, get_this_week, is_day_in_activity_days
 from db_service.dbworker import Child, Parent, Week, Activity, Activity_day, engine, session,\
     child_mtm_parent, activity_mtm_week
@@ -147,13 +147,14 @@ def get_activity_days_between_dates(
     return activity_days
 
 
-def report_table_child(info, day=False):
-    text = f'Ребенок: {info.name}\n\n'
+def report_table_child(child_id: int, day=False):
+    child = Child_serialize_activities.validate(ChildDB.get_data(child_id=child_id))
+    text = f'Ребенок: {child.name}\n\n'
     activity_lst = []
     weekly_days = get_this_week(this_day=day)
     vals_diagram = []
     lables_diagram = []
-    for activity in info.activities:
+    for activity in child.activities:
         weeks_activity = child_activity_by_day(activity.id, day=day)
         weekly_total_payout = get_weekly_total_payout(
             activity_id=activity.id,
@@ -162,8 +163,8 @@ def report_table_child(info, day=False):
         lables_diagram.append(activity.name)
         lst = [activity.name, weekly_total_payout]
         activity_lst.append(lst + weeks_activity)
-    # if vals_diagram:  #TODO: Проверить работу
-    #     get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=info.bot_user_id)
+    if vals_diagram:  #TODO: Проверить работу
+        get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=child.bot_user_id)
     text += f'Неделя: c {weekly_days[0].strftime("%d %b")} по {weekly_days[-1].strftime("%d %b")}\n'
     total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
@@ -293,7 +294,7 @@ class ChildDB:
         if child is None:
             return None
         else:
-            return child.serialize_activities
+            return child.id
             
     @staticmethod
     def get_all_children_id(parent_id: int) -> list:
