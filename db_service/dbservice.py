@@ -152,23 +152,35 @@ def report_table_child(child_id: int, day=False):
     text = f'Ребенок: {child.name}\n\n'
     activity_lst = []
     weekly_days = get_this_week(this_day=day)
-    vals_diagram = []
-    lables_diagram = []
     for activity in child.activities:
         weeks_activity = child_activity_by_day(activity.id, day=day)
         weekly_total_payout = get_weekly_total_payout(
             activity_id=activity.id,
             day=day, cost=activity.cost)
-        vals_diagram.append(weekly_total_payout)
-        lables_diagram.append(activity.name)
         lst = [activity.name, weekly_total_payout]
         activity_lst.append(lst + weeks_activity)
-    if vals_diagram:  #TODO: Проверить работу
-        get_diagram_image(vals=vals_diagram, labels=lables_diagram, child_id=child.bot_user_id)
     text += f'Неделя: c {weekly_days[0].strftime("%d %b")} по {weekly_days[-1].strftime("%d %b")}\n'
     total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
     return text + table + total_payout
+
+
+def get_data_for_diagram_image(child_id: int, day=False):
+    child = Child_serialize_activities.validate(ChildDB.get_data(child_id=child_id))
+    vals_diagram = []
+    labels_diagram = []
+    for activity in child.activities:
+        weekly_total_payout = get_weekly_total_payout(
+            activity_id=activity.id,
+            day=day, cost=activity.cost)
+        vals_diagram.append(weekly_total_payout)
+        labels_diagram.append(activity.name)
+    if vals_diagram:
+        get_diagram_image(vals=vals_diagram, labels=labels_diagram, child_id=child.bot_user_id)
+        return True
+    else:
+        return False
+
 
 
 def get_weekly_total_payout(activity_id, day, cost):
