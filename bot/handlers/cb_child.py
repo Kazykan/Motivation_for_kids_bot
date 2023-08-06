@@ -110,7 +110,7 @@ async def cb_add_child(callback: types.CallbackQuery, state: FSMContext) -> None
     else: # если есть запускаем меню работы с ним
         info = report_table_child(child_id=child_id)
         await callback.message.edit_text(text=f'<code>{info}\n</code>\n',
-                            reply_markup=ikb_child_activity_list(child_id=child_info.id))
+                            reply_markup=ikb_child_activity_list(child_id=child_id))
 
 
 @router.message(F.contact,
