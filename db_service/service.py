@@ -102,10 +102,8 @@ def convert_date(day):
     if day == 'False':
         return False
     if isinstance(day, datetime.date):
-        print(f"strfday = {day.strftime('%Y-%m-%d')}")
         return day.strftime('%Y-%m-%d')
     else:
-        print(f' day  = {day}')
         temp_day = f'{day} 08:15:27'
         time = datetime.datetime.strptime(temp_day, '%Y-%m-%d %H:%M:%S')
         return time.date()

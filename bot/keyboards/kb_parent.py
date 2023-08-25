@@ -28,7 +28,7 @@ def ikb_parent_children(bot_user_id):
             callback_data=BaseChildCFactory(id=child.id, day=False))
         row.append(1)
     row.append(2)
-    builder.button(text='Доб ребенка 🐰', callback_data='cb_add_child') #TODO: обработать кнопку
+    builder.button(text='Доб ребенка 🐰', callback_data='cb_add_child')
     builder.button(text='Доб родителя 🐻', callback_data='cb_add_one_more_parent')  
     builder.adjust(*row)
     return builder.as_markup()

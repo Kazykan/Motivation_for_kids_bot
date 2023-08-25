@@ -133,7 +133,7 @@ class Activity(Base):
         secondary=activity_mtm_week,
         back_populates="activities"
     ) # выбор дня недели мтм
-    activity_days: Mapped[List["Activity_day"]] = relationship()
+    activity_days: Mapped[List["Activity_day"]] = relationship(cascade="all, delete, delete-orphan")
 
     @property
     def serialize(self):
@@ -195,13 +195,13 @@ class Activity_day(Base):
         }
 
 
-
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
 
 if session.query(Week).count() == 0:
+    """Создание в БД дней недели если их нет"""
     for x in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
         one_weak = Week(
             week_day = x

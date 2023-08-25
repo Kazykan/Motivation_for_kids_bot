@@ -7,7 +7,6 @@ from db_service.dbservice import ActivityDB, ActivityDayDB, change_to_current_we
 
 
 async def send_message_cron_middleware(bot: Bot):
-    print('*' * 20)
     children = ChildDB.get_all_with_bot_user_id()
     for child in children:
         try:

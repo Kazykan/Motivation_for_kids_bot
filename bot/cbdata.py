@@ -35,6 +35,7 @@ class TickChangeActivityCFactory(CallbackData, prefix='cb_activity_edit'):
 
 class DeleteActivityCFactory(CallbackData, prefix='cb_activity_delete'):
     activity_id: int
+    
 
 
 class AddActivityCFactory(CallbackData, prefix='cb_add_activity'):

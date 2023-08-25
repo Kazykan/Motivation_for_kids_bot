@@ -38,14 +38,6 @@ def add_parent_and_child(info):
     return info_db.serialize
 
 
-# def get_child_activities(child_id: int):
-#     """Данные по заданиям"""
-#     child_data = session.query(Activity).filter(Activity.child_id == child_id).all()
-#     activity_data = []
-#     for data in child_data:
-#         activity_data.append(data.serialize)
-#     return activity_data
-
 def child_activity_by_day(activity_day_id: int, day=False) -> list:
     week_days = get_this_week(this_day=day)
     days = get_activity_days_between_dates(
@@ -180,7 +172,6 @@ def get_data_for_diagram_image(child_id: int, day=False):
         return True
     else:
         return False
-
 
 
 def get_weekly_total_payout(activity_id, day, cost):
@@ -385,7 +376,13 @@ class ActivityDB():
     def get_all_id():
         activities = session.query(Activity.id).all()
         return activities
-
+    
+    @staticmethod
+    def delete_activity(activity_id: int):
+        """Delete an activity and all related activityDay"""
+        activity = session.query(Activity).filter(Activity.id == activity_id).first()
+        session.delete(activity)
+        
 
 class ActivityDayDB():
 
@@ -482,4 +479,5 @@ def get_navigation_arrows_by_days_of_week(child_id, day):
             # Если есть данные по следующей неделе добавляем кнопку вперед
             buttons.append({'text': 'next week ➡️', 'day': next_week_str, 'row': 1})
     return buttons
+
 

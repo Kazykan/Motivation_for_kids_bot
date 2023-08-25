@@ -1,5 +1,4 @@
 """Работа с ребенком и его заданиями"""
-from datetime import date, timedelta
 import sys
 
 from aiogram import Router, types
@@ -239,3 +238,10 @@ async def cb_change_week_on_activity(callback: types.CallbackQuery,
             f'<b> ВНИМАНИЕ !!! </b> Изменения приведут к обнулению отметок в текущей неделе',
             reply_markup=ikb_weeks(callback_data.activity_id)
         )
+
+
+@router.callback_query(DeleteActivityCFactory.filter())
+async def cb_tick_change_activity_fab(callback: types.CallbackQuery,
+                    callback_data: DeleteActivityCFactory
+                    ) -> None:
+    """Удаление задания"""
