@@ -18,20 +18,33 @@ router = Router()
 @router.message(Command('start'))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()  # Clear FSM
-    parent_id = ParentDB.is_bot_user_id(int(message.from_user.id)) # Получем его данные
-    child_id = ChildDB.check_is_bot_user_id(bot_user_id=int(message.from_user.id)) # Получем его данные
-    if parent_id is not None:  # если родитель есть запускаем функцию работы с ним
+    parent_id = ParentDB.is_bot_user_id(
+        bot_user_id=int(message.from_user.id)
+        )  # Получем его данные
+    child_id = ChildDB.is_bot_user_id(
+        bot_user_id=int(message.from_user.id)
+        )  # Получем его данные
+    print(f'parent_id: {parent_id}\nchild_id: {child_id}')
+    if parent_id is not None:
+        # если родитель есть запускаем функцию работы с ним
         await message.answer(
             text='Выберите ребенка',
-            reply_markup=ikb_parent_children(bot_user_id=int(message.from_user.id))
+            reply_markup=ikb_parent_children(
+                bot_user_id=int(message.from_user.id)
+                )
             )
     elif child_id is not None:
         info = report_table_child(child_id=child_id)
-        await message.answer(text=f'<code>{info}\n</code>\n',
-                            reply_markup=ikb_child_activity_list(child_id=child_id))
-    else:
-        await message.answer('Добро пожаловать!\n', reply_markup=types.ReplyKeyboardRemove())
         await message.answer(
-            "В телеграмм бот Мотивация!\nВыберите кто вы?",
+            text=f'<code>{info}\n</code>\n',
+            reply_markup=ikb_child_activity_list(child_id=child_id)
+            )
+    else:
+        await message.answer(
+            text='Добро пожаловать!\n',
+            reply_markup=types.ReplyKeyboardRemove()
+            )
+        await message.answer(
+            text="В телеграмм бот Мотивация!\nВыберите кто вы?",
             reply_markup=ikb_start()
         )

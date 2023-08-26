@@ -102,7 +102,7 @@ async def cb_child_info_fab(callback: types.CallbackQuery,
 @router.callback_query(Text('cb_child_info'))
 async def cb_add_child(callback: types.CallbackQuery, state: FSMContext) -> None:
     """Первый пункт опросника по регистрации Ребенка"""
-    child_id = ChildDB.check_is_bot_user_id(bot_user_id=int(callback.from_user.id)) # Получем его данные
+    child_id = ChildDB.is_bot_user_id(bot_user_id=int(callback.from_user.id)) # Получем его данные
     if child_id is None:  # если ребенка нет, то добавляем
         await callback.message.answer(text="Для работы бота нужен Ваш номер телефона",
                                   reply_markup=kb_share_phone())

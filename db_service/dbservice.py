@@ -291,7 +291,7 @@ class ChildDB:
             return None
     
     @staticmethod
-    def check_is_bot_user_id(bot_user_id: int):
+    def is_bot_user_id(bot_user_id: int):
         """Поиск в БД если такой ребенок"""
         child = session.query(Child).filter(Child.bot_user_id == bot_user_id).first()
         if child is None:
