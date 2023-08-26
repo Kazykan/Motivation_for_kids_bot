@@ -3,6 +3,7 @@ import sys
 from aiogram import Bot
 
 sys.path.append("..")
+from bot.keyboards.kb_child import ikb_child_total_info  # noqa: E402
 from db_service.dbservice import ActivityDB, ActivityDayDB, \
     change_to_current_weeks_task, ChildDB  # noqa: E402
 
@@ -26,7 +27,7 @@ async def send_message_cron_middleware(bot: Bot):
             await bot.send_message(
                 child[1],
                 text=f'{activity_text}',
-                reply_markup=)
+                reply_markup=ikb_child_total_info(child_id=child[0]))
         except:
             pass
 

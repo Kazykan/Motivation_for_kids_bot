@@ -1,18 +1,19 @@
 import datetime
 
 from typing import List
-from sqlalchemy import create_engine, Column, Integer, String, Date, Text,\
+from sqlalchemy import create_engine, Column, Integer, String, Date,\
     Boolean, Table, ForeignKey, SmallInteger
-from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase, Mapped,\
-    mapped_column
-# from config import DATABASE
+from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase, \
+    Mapped, mapped_column
 
 
 DATABASE = "sqlite:///sqlite.db"
-engine = create_engine(DATABASE, echo=True)  #TODO: написать доступ к БД
+engine = create_engine(DATABASE, echo=True)  # TODO: написать доступ к БД
+
 
 class Base(DeclarativeBase):
     pass
+
 
 #  Связь многие-ко-многим дети - родители
 child_mtm_parent = Table(
@@ -40,9 +41,11 @@ class Child(Base):
     bot_user_id: Mapped[int] = mapped_column(Integer, nullable=True)
     name: Mapped[str] = mapped_column(String(30))
     birthday: Mapped[datetime.date] = mapped_column(Date, nullable=True)
-    sex: Mapped[int] = mapped_column(SmallInteger)  # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
+    # Standard ISO/IEC 5218 0 -not known, 1 -Male, 2 -Female, 9 -Not applicable
+    sex: Mapped[int] = mapped_column(SmallInteger)
     max_payout: Mapped[int] = mapped_column(Integer, nullable=True)
-    phone: Mapped[str] = mapped_column(String(12))  # TODO: Сделать уникальным поле
+    # TODO: Сделать уникальным поле
+    phone: Mapped[str] = mapped_column(String(12))
     parents: Mapped[List["Parent"]] = relationship(
         secondary=child_mtm_parent,
         back_populates="children"
@@ -60,9 +63,10 @@ class Child(Base):
             'max_payout': self.max_payout,
             'phone': self.phone,
             'parents': [{'id': x.id, 'name': x.name} for x in self.parents],
-            'activities': [{'id': x.id, 'name': x.name} for x in self.activities]
+            'activities': [
+                {'id': x.id,
+                 'name': x.name} for x in self.activities]
         }
-    
 
     @property
     def serialize_activities(self):
@@ -85,7 +89,6 @@ class Child(Base):
                 } for x in self.activities]
         }
 
-    
 
 class Parent(Base):
     """Родители"""
@@ -94,8 +97,10 @@ class Parent(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     bot_user_id: Mapped[int] = mapped_column(Integer, nullable=True)
     name: Mapped[str] = mapped_column(String(30))
-    sex: Mapped[int] = mapped_column(SmallInteger)  # Standard ISO/IEC 5218 0 - not known, 1 - Male, 2 - Female, 9 - Not applicable
-    access: Mapped[int] = mapped_column(Integer, default=0) #TODO расписать функционал доступа
+    # Standard ISO/IEC 5218 0 -not known, 1 -Male, 2 -Female, 9 -Not applicable
+    sex: Mapped[int] = mapped_column(SmallInteger)
+    # TODO расписать функционал доступа
+    access: Mapped[int] = mapped_column(Integer, default=0)
     phone: Mapped[str] = mapped_column(String(12))
     children: Mapped[List["Child"]] = relationship(
         secondary=child_mtm_parent,
@@ -125,19 +130,21 @@ class Activity(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(15))
     title: Mapped[str] = mapped_column(String(200), nullable=True)
-    percent_complete: Mapped[int] = mapped_column(SmallInteger)  # Процент выполнения для завершения задания
-    cost: Mapped[int] = mapped_column(SmallInteger)  # стоимость выполнения задания
-    max_cost: Mapped[int] = mapped_column(SmallInteger, nullable=True) # максимальная стоимость
+    # Процент выполнения для завершения задания
+    percent_complete: Mapped[int] = mapped_column(SmallInteger)
+    cost: Mapped[int] = mapped_column(SmallInteger)
+    max_cost: Mapped[int] = mapped_column(SmallInteger, nullable=True)
     child_id: Mapped[int] = mapped_column(ForeignKey('child.id'))
     weeks: Mapped[List["Week"]] = relationship(
         secondary=activity_mtm_week,
         back_populates="activities"
-    ) # выбор дня недели мтм
-    activity_days: Mapped[List["Activity_day"]] = relationship(cascade="all, delete, delete-orphan")
+    )  # выбор дня недели мтм
+    activity_days: Mapped[List["Activity_day"]] = relationship(
+        cascade="all, delete, delete-orphan")
 
     @property
     def serialize(self):
-    # TODO: Загрузка текущей недели в activity_days
+        # TODO: Загрузка текущей недели в activity_days
         return {
             'id': self.id,
             'name': self.name,
@@ -146,15 +153,18 @@ class Activity(Base):
             'cost': self.cost,
             'max_cost': self.max_cost,
             'child_id': self.child_id,
-            # 'child_name': session.query(Child.name).filter(Child.id == self.child_id).first(),
-            'weeks': [{'week': x.week_day, 'week_id': x.id} for x in self.weeks],
+            # 'child_name': session.query(Child.name).filter(
+            # Child.id == self.child_id).first(),
+            'weeks': [
+                {'week': x.week_day,
+                 'week_id': x.id
+                 } for x in self.weeks],
             'activity_days': [
                 {'id': x.id,
                  'is_done': x.is_done,
                  'day': x.day
                  } for x in self.activity_days]
         }
-
 
 
 class Week(Base):
@@ -203,9 +213,7 @@ session = Session()
 if session.query(Week).count() == 0:
     """Создание в БД дней недели если их нет"""
     for x in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
-        one_weak = Week(
-            week_day = x
-        )
+        one_weak = Week(week_day=x)
         session.add(one_weak)
         session.commit()
 

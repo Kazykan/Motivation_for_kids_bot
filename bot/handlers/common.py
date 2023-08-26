@@ -1,14 +1,11 @@
 from aiogram import Router, types
 from aiogram.filters import Command
-from aiogram.filters.text import Text
-from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from bot.handlers.cb_child import ikb_child_activity_list
 
 from bot.keyboards.for_start import ikb_start
 from bot.keyboards.kb_parent import ikb_parent_children
 from db_service.dbservice import ChildDB, ParentDB, report_table_child
-from bot.handlers.cb_parent import cb_add_parent
 
 
 router = Router()
@@ -16,7 +13,7 @@ router = Router()
 
 @router.message(Command('cancel'))
 @router.message(Command('start'))
-async def cmd_start(message: Message, state: FSMContext):
+async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()  # Clear FSM
     parent_id = ParentDB.is_bot_user_id(
         bot_user_id=int(message.from_user.id)

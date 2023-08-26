@@ -4,7 +4,8 @@ from aiogram.filters.callback_data import CallbackData
 
 
 class BaseChildCFactory(CallbackData, prefix="cb_child"):
-    """Префикс — это общая подстрока в начале, по которой фреймворк будет определять, какая структура лежит в колбэке"""
+    """Префикс — это общая подстрока в начале,
+    по которой фреймворк будет определять, какая структура лежит в колбэке"""
     id: int
     day: str | bool
 
@@ -14,7 +15,9 @@ class ChildInfoCFactory(CallbackData, prefix="cb_child_info"):
     day: str | bool
 
 
-class ActivityDayCompletionNotificationCFactory(CallbackData, prefix="cb_activity_day_completion"):
+class ActivityDayCompletionNotificationCFactory(
+        CallbackData,
+        prefix="cb_activity_day_completion"):
     child_id: int
     activity_day_id: int
     parent: str

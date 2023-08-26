@@ -1,9 +1,8 @@
 import sys
-from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 sys.path.append("..")
-from bot.cbdata import GenderCFactory
+from bot.cbdata import GenderCFactory  # noqa: E402
 
 
 def ikb_gender():
