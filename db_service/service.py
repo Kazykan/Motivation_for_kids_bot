@@ -107,3 +107,14 @@ def convert_date(day):
         temp_day = f'{day} 08:15:27'
         time = datetime.datetime.strptime(temp_day, '%Y-%m-%d %H:%M:%S')
         return time.date()
+
+
+def valid_name(contact):
+    fullname = ''
+    if contact.last_name:
+        fullname += f'{contact.last_name} '
+    if contact.first_name:
+        fullname += f'{contact.first_name}'
+    if fullname == '':
+        pass
+    return fullname
