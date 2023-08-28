@@ -14,7 +14,8 @@ from bot.cbdata import ActivityCFactory, AddActivityCFactory, \
     ChangeOneWeekOnActivityCFactory  # noqa: E402
 from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, \
     add_activity_week, delete_activity_week, report_table_child, \
-    get_activity_day, get_activity_week, get_navigation_arrows_by_days_of_week  # noqa: E402
+    get_activity_day, get_activity_week, \
+    get_navigation_arrows_by_days_of_week  # noqa: E402
 from db_service.pydantic_model import Activity_day_serializer, \
     Activity_serialize, Child_serialize_activities, Activity_base  # noqa: E402
 from db_service.service import activity_to_text, convert_date, \
@@ -79,7 +80,8 @@ def ikb_activity_tick(activity_id: int):
     activity = Activity_serialize.validate(
         ChildDB.get_activity_one(activity_id=activity_id))
     builder = InlineKeyboardBuilder()
-    days = sorted(activity.activity_days, key=lambda x: x.day)  # Сортировка по дате
+    # Сортировка по дате
+    days = sorted(activity.activity_days, key=lambda x: x.day)
     for day in days:
         if day.is_done:
             is_done = '✅'
@@ -115,8 +117,9 @@ def ikb_weeks(activity_id: int) -> types.InlineKeyboardMarkup:
                 edit=True
                 )
             )
-    builder.button(text='Перейти списку заданий',
-                   callback_data=BaseChildCFactory(id=activity_info.child_id, day=False))
+    builder.button(
+        text='Перейти списку заданий',
+        callback_data=BaseChildCFactory(id=activity_info.child_id, day=False))
     builder.adjust(7)
     return builder.as_markup()
 
@@ -178,9 +181,10 @@ async def cb_child_info_fab(callback: types.CallbackQuery,
         child_id=callback_data.id,
         day=convert_date(callback_data.day)
         )
+    gender = get_child_gender_emoji(child_info.sex)
     await callback.message.edit_text(
         text=f'<code>{info}\n</code>\n'
-        f'Список заданий {get_child_gender_emoji(child_info.sex)} {child_info.name}',
+        f'Список заданий {gender} {child_info.name}',
         reply_markup=ikb_child_menu(
             child_id=int(callback_data.id),
             day=callback_data.day)
@@ -201,15 +205,17 @@ async def cb_child_add_activity(callback: types.CallbackQuery,
     child_info = Child_serialize_activities.validate(
         ChildDB.get_data(child_id=callback_data.child_id))
     # TODO: Добавить проверку доступа родителя к этому ребенку
+    gender = get_child_gender_emoji(child_info.sex)
     await callback.message.edit_text(
-        f'Добавить задание для: {get_child_gender_emoji(child_info.sex)} {child_info.name}\n'
+        f'Добавить задание для: {gender} {child_info.name}\n'
         f'Введите название задания, желательно состоящее из одного слова...\n')
     await state.update_data(child_id=child_info.id)
     await state.set_state(AddActivityStatesGroup.name)
 
 
 @router.message(AddActivityStatesGroup.name)
-async def child_add_activity_name(message: types.Message, state: FSMContext) -> None:
+async def child_add_activity_name(
+        message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 2 этап описание задания"""
     await state.update_data(name=message.text)
     data = await state.get_data()  # Загружаем данные из FSM
@@ -219,7 +225,8 @@ async def child_add_activity_name(message: types.Message, state: FSMContext) -> 
 
 
 @router.message(AddActivityStatesGroup.title)
-async def child_add_activity_title(message: types.Message, state: FSMContext) -> None:
+async def child_add_activity_title(
+        message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 3 этап процент для выполнения"""
     await state.update_data(title=message.text)
     data = await state.get_data()  # Загружаем данные из FSM
@@ -231,7 +238,8 @@ async def child_add_activity_title(message: types.Message, state: FSMContext) ->
 
 
 @router.message(AddActivityStatesGroup.percent_complete)
-async def child_add_activity_percent_complete(message: types.Message, state: FSMContext) -> None:
+async def child_add_activity_percent_complete(
+        message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 4 этап стоимость выполнения"""
     data = await state.get_data()
     try:
@@ -249,7 +257,8 @@ async def child_add_activity_percent_complete(message: types.Message, state: FSM
 
 
 @router.message(AddActivityStatesGroup.cost)
-async def child_add_activity_cost(message: types.Message, state: FSMContext) -> None:
+async def child_add_activity_cost(
+        message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 5 этап выбор дней недели"""
     data = await state.get_data()
     try:
@@ -271,7 +280,8 @@ async def child_add_activity_cost(message: types.Message, state: FSMContext) -> 
         await message.answer(
             f"<code>{activity_to_text(activity)}</code>"
             f"Выберите дни недели для задания"
-            f"<b> ВНИМАНИЕ !!! </b> Изменения приведут к обнулению отметок в текущей неделе",
+            f"<b> ВНИМАНИЕ !!! </b> "
+            f"Изменения приведут к обнулению отметок в текущей неделе",
             reply_markup=ikb_weeks(activity_id=activity.id)
             )
         await state.clear()
@@ -309,7 +319,8 @@ async def cb_change_week_on_activity(
     info = activity_to_text(activity)
     await callback.message.edit_text(
         text=f'<code>{info}</code>\nВыберите дни недели для задания\n'
-             f'<b> ВНИМАНИЕ !!! </b> Изменения приведут к обнулению отметок в текущей неделе',
+             f'<b> ВНИМАНИЕ !!! </b> '
+             f'Изменения приведут к обнулению отметок в текущей неделе',
              reply_markup=ikb_weeks(callback_data.activity_id)
         )
 

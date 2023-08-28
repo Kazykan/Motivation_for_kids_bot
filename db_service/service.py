@@ -10,13 +10,16 @@ from db_service.pydantic_model import Activity_serialize
 def valid_number(number: str):
     """Проверка номера на валидность"""
     num = ''.join([x for x in number if x.isdigit()])
-    if len(num) == 11: num = '7' + num[1:]
-    elif len(num) == 10: num = '7' + num
+    if len(num) == 11:
+        num = '7' + num[1:]
+    elif len(num) == 10:
+        num = '7' + num
     try:
         result = re.match(r'^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$', num)
         if bool(result):
             return num
-        else: return False
+        else:
+            return False
     except TypeError:
         return False
 
@@ -29,9 +32,9 @@ def get_child_gender_emoji(sex: int) -> str:
 
 def is_weekday_on(week_dict: list) -> dict:
     """Берем исходный список недель и заменяем в нем активные недели"""
-    source_dict = {1:'❌', 2:'❌',
-                   3:'❌', 4:'❌',
-                   5:'❌', 6:'❌', 7: '❌'}
+    source_dict = {1: '❌', 2: '❌',
+                   3: '❌', 4: '❌',
+                   5: '❌', 6: '❌', 7: '❌'}
     if not week_dict:
         return source_dict
     all = {}
@@ -39,13 +42,13 @@ def is_weekday_on(week_dict: list) -> dict:
         x_dict = {x.week_id: x.week}
         temp_dict = all | x_dict
         all = temp_dict.copy()
-    return({**source_dict, **all})
+    return ({**source_dict, **all})
 
 
 def split_by_week_day(week_list):
-    source_dict = {1:'-', 2:'-',
-                   3:'-', 4:'-',
-                   5:'-', 6:'-', 7: '-'}
+    source_dict = {1: '-', 2: '-',
+                   3: '-', 4: '-',
+                   5: '-', 6: '-', 7: '-'}
     all = {}
     for week_day in week_list:
         day_dict = {week_day.week_id: week_day.week}
@@ -63,12 +66,16 @@ def activity_to_text(activity: Activity_serialize, day=False):
         this_week = get_this_week(this_day=day)
     else:
         this_week = get_this_week()
-    days = sorted(activity.activity_days, key=lambda x: x.day)  # Сортировка по дате
+    # Сортировка по дате
+    days = sorted(activity.activity_days, key=lambda x: x.day)
     for day in days:
         if day.day in this_week:
             text += f'\n{day.day.strftime("%a %d %b")} '
-            if day.is_done: text += '✅'
-            else: text += '❌'
+
+            if day.is_done:
+                text += '✅'
+            else:
+                text += '❌'
     return text
 
 
