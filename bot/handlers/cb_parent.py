@@ -140,7 +140,8 @@ async def cb_add_parent_gender(callback: types.CallbackQuery,
 
 
 @router.message(AddParentStatesGroup.child_phone)
-async def add_parent_child_phone(message: types.Message, state: FSMContext) -> None:
+async def add_parent_child_phone(
+        message: types.Message, state: FSMContext) -> None:
     """Добавление данных родителя - 4 этап номер телефона ребенка"""
     child_number = valid_number(message.text)
     if child_number:
