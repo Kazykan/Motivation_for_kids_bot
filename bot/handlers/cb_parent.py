@@ -57,13 +57,15 @@ async def cb_notification_completion_of_activity_day(
         child_id=callback_data.child_id)
 
     child_name = ChildDB.get_name(child_id=callback_data.child_id)
+    activity_day = ActivityDayDB.info(
+        activity_day_id=callback_data.activity_day_id)
 
     try:
         for one_id in parents_bot_user_id:
             await my_bot.send_message(
                 one_id,
                 text=f'{child_name}, просит подтвердить выполнения задания'
-                f' - {activity_name}',
+                f' - {activity_name} за {activity_day["day"]}',
                 reply_markup=ikb_confirm_execution(
                     activity_day_id=callback_data.activity_day_id))
     except:

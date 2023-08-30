@@ -443,6 +443,12 @@ class ActivityDB():
 class ActivityDayDB():
 
     @staticmethod
+    def info(activity_day_id: int):
+        activity_day = session.query(Activity_day).filter(
+            Activity_day.id == activity_day_id).first()
+        return activity_day.serialize
+
+    @staticmethod
     def is_previous_week(child_id: int, day):
         this_week = get_this_week(this_day=day)
         activity_day = session.query(Activity_day).filter(and_(
