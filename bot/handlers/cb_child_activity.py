@@ -8,6 +8,8 @@ from aiogram.types import FSInputFile
 
 
 sys.path.append("..")
+from bot.keyboards.kb_delete_activity import ikb_delete_activity  # noqa: E402
+from bot.keyboards.kb_list_of_activity import ikb_list_of_activity  # noqa: E402
 from bot.statesgroup import AddActivityStatesGroup  # noqa: E402
 from bot.cbdata import ActivityCFactory, AddActivityCFactory, \
     BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, \
@@ -58,12 +60,14 @@ def ikb_child_menu(child_id: int, day=False):
         builder.button(
             text='🛠️📅',
             callback_data=ChangeOneWeekOnActivityCFactory(
-                week_id=1, activity_id=activity.id, edit=False)
-            )
+                week_id=1,
+                activity_id=activity.id,
+                edit=False))
         builder.button(
             text='🗑',
-            callback_data=DeleteActivityCFactory(activity_id=activity.id)
-            )
+            callback_data=DeleteActivityCFactory(
+                activity_id=activity.id,
+                second_stage='no'))
         row.append(4)
     row.append(2)
     builder.button(
@@ -189,12 +193,12 @@ async def cb_child_info_fab(callback: types.CallbackQuery,
             child_id=int(callback_data.id),
             day=callback_data.day)
             )
-    image_from_pc = FSInputFile("1164470729.png")
-    result = await callback.message.answer_photo(
-        image_from_pc,
-        caption="Изображение из файла на компьютере"
-    )
-    file_ids.append(result.photo[-1].file_id)
+    # image_from_pc = FSInputFile("1164470729.png")
+    # result = await callback.message.answer_photo(
+    #     image_from_pc,
+    #     caption="Изображение из файла на компьютере"
+    # )
+    # file_ids.append(result.photo[-1].file_id)
 
 
 @router.callback_query(AddActivityCFactory.filter())
@@ -325,8 +329,27 @@ async def cb_change_week_on_activity(
         )
 
 
-# @router.callback_query(DeleteActivityCFactory.filter())
-# async def cb_tick_change_activity_fab(callback: types.CallbackQuery,
-#                     callback_data: DeleteActivityCFactory
-#                     ) -> None:
-#     """Удаление задания"""
+@router.callback_query(DeleteActivityCFactory.filter())
+async def cb_delete_activity(
+        callback: types.CallbackQuery,
+        callback_data: DeleteActivityCFactory) -> None:
+    """Удаление задания"""
+    print('***' * 40)
+    info = ActivityDB.get_info(activity_id=callback_data.activity_id)
+    # Если есть подтверждение то удаляем
+    if callback_data.second_stage == 'yes':
+        print(f'{info["name"]} - удален.')
+        ActivityDB.delete_activity(activity_id=callback_data.activity_id)
+        await callback.message.edit_text(
+            text=f'{info["name"]} - удален.',
+            reply_markup=ikb_list_of_activity(child_id=int(info["child_id"])))
+    else:
+        print(info)
+        await callback.message.edit_text(
+            text=f'Подтвердите удаление задания -  {info["name"]} '
+            f'\n ВНИМАНИЕ !!! ',
+            reply_markup=ikb_delete_activity(
+                activity_id=int(callback_data.activity_id),
+                child_id=int(info["child_id"])
+            )
+        )

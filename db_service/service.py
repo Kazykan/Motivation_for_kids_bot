@@ -15,7 +15,8 @@ def valid_number(number: str):
     elif len(num) == 10:
         num = '7' + num
     try:
-        result = re.match(r'^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$', num)
+        result = re.match(
+            r'^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$', num)
         if bool(result):
             return num
         else:
@@ -82,8 +83,8 @@ def activity_to_text(activity: Activity_serialize, day=False):
 def get_this_week(this_day=False):
     """Получаем даты текущей недели отсортированные"""
     if not this_day:
-        this_day = date.today() # Получаем текущую дату
-    week_day = this_day.weekday() + 1 # И день недели
+        this_day = date.today()  # Получаем текущую дату
+    week_day = this_day.weekday() + 1  # И день недели
     days_of_current_week = []
     if week_day == 1:
         for x in range(7):

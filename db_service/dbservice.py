@@ -439,6 +439,12 @@ class ActivityDB():
             Activity.id == activity_id).first()
         session.delete(activity)
 
+    @staticmethod
+    def get_info(activity_id: int):
+        activity = session.query(Activity).filter(
+            Activity.id == activity_id).first()
+        return activity.serialize
+
 
 class ActivityDayDB():
 

@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from typing import List
-from datetime import datetime, date
+from datetime import date
 
 
 class Week_list(BaseModel):
     week_id: int
     week: str
+
 
 class Parent_and_child(BaseModel):
     name: str
@@ -28,7 +29,6 @@ class Children_in_parent_base(BaseModel):
     name: str
     phone: str
     sex: int
-
 
 
 class Parent_list(BaseModel):

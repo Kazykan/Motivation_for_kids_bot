@@ -38,6 +38,7 @@ class TickChangeActivityCFactory(CallbackData, prefix='cb_activity_edit'):
 
 class DeleteActivityCFactory(CallbackData, prefix='cb_activity_delete'):
     activity_id: int
+    second_stage: str  # Вторая стадия подтверждения удаления 'no' or 'yes'
 
 
 class AddActivityCFactory(CallbackData, prefix='cb_add_activity'):
