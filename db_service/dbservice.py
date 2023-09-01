@@ -438,6 +438,8 @@ class ActivityDB():
         activity = session.query(Activity).filter(
             Activity.id == activity_id).first()
         session.delete(activity)
+        session.commit()
+        return True
 
     @staticmethod
     def get_info(activity_id: int):

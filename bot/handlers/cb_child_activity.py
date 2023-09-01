@@ -176,7 +176,6 @@ async def cb_child_activity_fab(callback: types.CallbackQuery,
 async def cb_child_info_fab(callback: types.CallbackQuery,
                             callback_data: BaseChildCFactory) -> None:
     """Список заданий ребенка с возможностью удалить или добавить задания"""
-    file_ids = []
     # TODO: Добавить проверку доступа родителя к этому ребенку
     child_info = Child_serialize_activities.validate(
         ChildDB.get_data(child_id=callback_data.id)
@@ -193,6 +192,7 @@ async def cb_child_info_fab(callback: types.CallbackQuery,
             child_id=int(callback_data.id),
             day=callback_data.day)
             )
+    # file_ids = []
     # image_from_pc = FSInputFile("1164470729.png")
     # result = await callback.message.answer_photo(
     #     image_from_pc,
@@ -334,17 +334,15 @@ async def cb_delete_activity(
         callback: types.CallbackQuery,
         callback_data: DeleteActivityCFactory) -> None:
     """Удаление задания"""
-    print('***' * 40)
     info = ActivityDB.get_info(activity_id=callback_data.activity_id)
     # Если есть подтверждение то удаляем
     if callback_data.second_stage == 'yes':
-        print(f'{info["name"]} - удален.')
         ActivityDB.delete_activity(activity_id=callback_data.activity_id)
         await callback.message.edit_text(
             text=f'{info["name"]} - удален.',
-            reply_markup=ikb_list_of_activity(child_id=int(info["child_id"])))
+            reply_markup=ikb_list_of_activity(child_id=int(info["child_id"]))
+            )
     else:
-        print(info)
         await callback.message.edit_text(
             text=f'Подтвердите удаление задания -  {info["name"]} '
             f'\n ВНИМАНИЕ !!! ',
