@@ -168,21 +168,24 @@ def report_table_child(child_id: int, day=False):
     text = f'Ребенок: {child.name}\n\n'
     activity_lst = []
     weekly_days = get_this_week(this_day=day)
+    total_payout = 0
 
     for activity in child.activities:
         weeks_activity = child_activity_by_day(activity.id, day=day)
         weekly_total_payout = get_weekly_total_payout(
             activity_id=activity.id,
             day=day, cost=activity.cost)
-        lst = [activity.name, weekly_total_payout]
+        current_and_total_payout = f'{weekly_total_payout}/{activity.cost}'
+        lst = [activity.name, current_and_total_payout]
         activity_lst.append(lst + weeks_activity)
+        total_payout += weekly_total_payout
 
     text += f'Неделя: c {weekly_days[0].strftime("%d %b")}'
     text += f' по {weekly_days[-1].strftime("%d %b")}\n'
 
-    total_payout = f'\nИтоговая выплата: {sum([x[1] for x in activity_lst])} ₽'
+    total_payout_text = f'\nИтоговая выплата: {total_payout} ₽'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
-    return text + table + total_payout
+    return text + table + total_payout_text
 
 
 def get_data_for_diagram_image(child_id: int, day=False):
@@ -221,13 +224,17 @@ def get_weekly_total_payout(activity_id, day, cost):
         end_date=current_week[-1], count=True)
 
     try:
-        one_day_cost = math.ceil(cost / count)
+        # стоимость одного дня округляем в большую сторону
+        # one_day_cost = math.ceil(cost / count)
+        one_day_cost = round(cost / count)
     except ZeroDivisionError:
         one_day_cost = 0
     total_payout = 0
     for activity_day in activity_day_to_db:
         if activity_day[2]:
             total_payout += one_day_cost
+    if cost - total_payout <= 2:
+        total_payout = cost
     return total_payout
 
 

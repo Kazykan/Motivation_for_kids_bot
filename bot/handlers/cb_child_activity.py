@@ -40,7 +40,7 @@ def ikb_child_menu(child_id: int, day=False):
         child_id=child_id,
         day=day
         )
-    if navigation_button:
+    if navigation_button:  # Если есть пред. дни недели доб. кнопки навигации
         for button in navigation_button:
             builder.button(
                 text=button['text'],
@@ -79,26 +79,26 @@ def ikb_child_menu(child_id: int, day=False):
     return builder.as_markup()
 
 
-def ikb_activity_tick(activity_id: int):
+def ikb_activity_tick(activity_id: int, day=False):
     """Одно задание по дням недели и возможность отметить выполнения по дням"""
     activity = Activity_serialize.validate(
-        ChildDB.get_activity_one(activity_id=activity_id))
+        ChildDB.get_activity_one(activity_id=activity_id, day=day))
     builder = InlineKeyboardBuilder()
     # Сортировка по дате
     days = sorted(activity.activity_days, key=lambda x: x.day)
-    for day in days:
-        if day.is_done:
+    for one_day in days:
+        if one_day.is_done:
             is_done = '✅'
         else:
             is_done = '❌'
         builder.button(
-            text=f'{day.day.strftime("%a %d %b")} {is_done}',
+            text=f'{one_day.day.strftime("%a %d %b")} {is_done}',
             callback_data='cb_activity_day_one'
             )
         builder.button(
             text='изменить 🔄',
-            callback_data=TickChangeActivityCFactory(activity_day_id=day.id)
-            )
+            callback_data=TickChangeActivityCFactory(
+                activity_day_id=one_day.id))
     builder.button(
         text='Перейти списку заданий',
         callback_data=BaseChildCFactory(id=activity.child_id, day=False))
