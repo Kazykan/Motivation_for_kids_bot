@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 
 from bot.handlers import common, cb_parent, cb_child_activity, cb_child, \
-    cb_add_one_more_parent, cb_add_child
+    cb_add_one_more_parent, cb_add_child, cb_edit_activity
 
 from bot.handlers.apshed import create_activity_days_for_next_week, \
     send_message_cron_middleware
@@ -46,8 +46,23 @@ async def main(bot):
     dp = Dispatcher(storage=MemoryStorage())
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
-    scheduler.add_job(send_message_cron_middleware, 'cron', hour=10, minute=15, kwargs={'bot': bot})
-    scheduler.add_job(create_activity_days_for_next_week, 'cron', day_of_week=6, hour=23, minute=30, kwargs={'bot': bot})
+
+    scheduler.add_job(
+        send_message_cron_middleware,
+        'cron',
+        hour=10,
+        minute=15,
+        kwargs={'bot': bot}
+        )
+
+    scheduler.add_job(
+        create_activity_days_for_next_week,
+        'cron',
+        day_of_week=6,
+        hour=23,
+        minute=30,
+        kwargs={'bot': bot}
+        )
 
     dp.include_router(common.router)
     dp.include_router(cb_parent.router)
@@ -55,6 +70,7 @@ async def main(bot):
     dp.include_router(cb_child.router)
     dp.include_router(cb_add_one_more_parent.router)
     dp.include_router(cb_add_child.router)
+    dp.include_router(cb_edit_activity.router)
 
     await set_commands(bot)
     await bot.delete_webhook(drop_pending_updates=True)

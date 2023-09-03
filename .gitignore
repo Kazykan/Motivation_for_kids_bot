@@ -7,3 +7,4 @@ __pycache__
 sqlite.db
 bot/test.py
 db_service/add_test_data.py
+db_service/test.py

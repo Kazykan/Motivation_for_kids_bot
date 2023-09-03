@@ -32,13 +32,25 @@ class ActivityChildCFactory(CallbackData, prefix='cb_activity_child'):
     activity_id: int
 
 
-class TickChangeActivityCFactory(CallbackData, prefix='cb_activity_edit'):
+class TickChangeActivityCFactory(CallbackData, prefix='cb_activity_tick_edit'):
     activity_day_id: int
 
 
 class DeleteActivityCFactory(CallbackData, prefix='cb_activity_delete'):
     activity_id: int
     second_stage: str  # Вторая стадия подтверждения удаления 'no' or 'yes'
+
+
+class EditActivityCFactory(CallbackData, prefix='cb_activity_edit'):
+    activity_id: int
+
+
+class EditActivityOptionsCFactory(
+        CallbackData, prefix='cb_activity_field_edit'):
+    """Редактировать параметры задания: name, title, cost, etc."""
+    activity_id: int
+    field: str
+    description: str
 
 
 class AddActivityCFactory(CallbackData, prefix='cb_add_activity'):

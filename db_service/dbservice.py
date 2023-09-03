@@ -233,13 +233,16 @@ def get_weekly_total_payout(activity_id, day, cost):
     for activity_day in activity_day_to_db:
         if activity_day[2]:
             total_payout += one_day_cost
+
+    # Если сумма стоимости выполнения близка к выплатам на
+    # неделю округляем до нее
     if cost - total_payout <= 2:
         total_payout = cost
     return total_payout
 
 
 class ParentDB:
-    
+
     @staticmethod
     def add_one_more_parent(data):
         """{'name': 'Марина', 'gender': 2, 'phone': '7962412****',
@@ -255,7 +258,7 @@ class ParentDB:
             child_ph = session.query(Child).filter(Child.id == child_id).first()
             child_ph.parents.append(parent)
             session.commit()
-    
+
     @staticmethod
     def get_or_update_data_by_phone_number(
             phone_number: str,
@@ -268,7 +271,7 @@ class ParentDB:
             parent.bot_user_id = bot_user_id
             session.commit()
             return parent.serialize
-    
+
     @staticmethod
     def get_all_parent_id(child_id: int) -> list:
         """ Список id всех родителей"""
@@ -284,7 +287,7 @@ class ParentDB:
     def get_bot_user_id_is_active():
         parents_id = session.query(Parent.bot_user_id).all()
         return parents_id
-    
+
     @staticmethod
     def get_all_bot_users_id(child_id: int) -> list:
         stmt = select(Parent.bot_user_id).where(and_(
@@ -333,7 +336,7 @@ class ChildDB:
         child.bot_user_id = bot_user_id
         session.commit()
         return True
-    
+
     @staticmethod
     def check_is_phone(child_number: str):
         child = session.query(Child).filter(
@@ -342,7 +345,7 @@ class ChildDB:
             return child.serialize_activities
         else:
             return None
-    
+
     @staticmethod
     def is_bot_user_id(bot_user_id: int):
         """Поиск в БД если такой ребенок"""
@@ -352,7 +355,7 @@ class ChildDB:
             return None
         else:
             return child.id
-            
+   
     @staticmethod
     def get_all_children_id(parent_id: int) -> list:
         """ Список id всех родителей"""
@@ -363,7 +366,7 @@ class ChildDB:
         ))
         all_children_id = session.execute(stmt).scalars().all()
         return all_children_id
-    
+
     @staticmethod
     def get_first_child_id(bot_user_id: int):
         """Вернуть id первого ребенка"""
@@ -374,7 +377,7 @@ class ChildDB:
         ))
         one_child_id = session.execute(stmt).scalars().first()
         return one_child_id
-    
+
     @staticmethod
     def get_activity_one(activity_id: int, day=False) -> dict:
         this_week = get_this_week(this_day=day)
@@ -453,6 +456,26 @@ class ActivityDB():
         activity = session.query(Activity).filter(
             Activity.id == activity_id).first()
         return activity.serialize
+
+    @staticmethod
+    def update_info(
+            activity_id: int,
+            name=False,
+            title=False,
+            percent_complete=False,
+            cost=False):
+        activity = session.query(Activity).filter(
+            Activity.id == activity_id).first()
+        if name:
+            activity.name = name
+        if title:
+            activity.title = title
+        if percent_complete or percent_complete == 0:
+            activity.percent_complete = percent_complete
+        if cost:
+            activity.cost = cost
+        session.commit()
+        return activity
 
 
 class ActivityDayDB():

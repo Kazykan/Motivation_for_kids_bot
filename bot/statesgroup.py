@@ -31,3 +31,12 @@ class AddActivityStatesGroup(StatesGroup):
     percent_complete = State()
     cost = State()
     weeks = State()
+
+
+class EditActivityStatesGroup(StatesGroup):
+    """Машина состояний для работы опросника по редактированию задания"""
+    next = State()
+    # name = State()
+    # title = State()
+    # percent_complete = State()
+    # cost = State()
