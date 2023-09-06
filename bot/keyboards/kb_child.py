@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.cbdata import ActivityChildCFactory, ChildInfoCFactory
-from db_service.dbservice import ChildDB, get_navigation_arrows_by_days_of_week
+from db_service.dbservice import ChildDB, get_weekly_navigation_arrows
 from db_service.pydantic_model import Child_serialize_activities
 
 
@@ -22,7 +22,7 @@ def ikb_child_activity_list(child_id: int, day=False):
         ChildDB.get_data(child_id=child_id))
     builder = InlineKeyboardBuilder()
 
-    navigation_button = get_navigation_arrows_by_days_of_week(
+    navigation_button = get_weekly_navigation_arrows(
         child_id=child_id,
         day=day)
 

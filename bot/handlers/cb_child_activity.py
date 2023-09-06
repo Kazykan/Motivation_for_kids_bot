@@ -4,6 +4,7 @@ import sys
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.keyboards.ikb_activity_tick import ikb_activity_tick
 from bot.keyboards.ikb_child_menu import ikb_child_menu
 # from aiogram.types import FSInputFile
 
@@ -12,13 +13,12 @@ sys.path.append("..")
 from bot.keyboards.kb_delete_activity import ikb_delete_activity  # noqa: E402
 from bot.keyboards.kb_list_of_activity import ikb_list_of_activity  # noqa: E402
 from bot.statesgroup import AddActivityStatesGroup  # noqa: E402
-from bot.cbdata import ActivityCFactory, AddActivityCFactory, \
+from bot.cbdata import ActivityCallbackFactory, AddActivityCFactory, \
     BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, \
     ChangeOneWeekOnActivityCFactory  # noqa: E402
 from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, \
     add_activity_week, delete_activity_week, report_table_child, \
-    get_activity_day, get_activity_week, \
-    get_navigation_arrows_by_days_of_week  # noqa: E402
+    get_activity_day, get_activity_week  # noqa: E402
 from db_service.pydantic_model import Activity_day_serializer, \
     Activity_serialize, Child_serialize_activities, Activity_base  # noqa: E402
 from db_service.service import activity_to_text, convert_date, \
@@ -27,33 +27,6 @@ from db_service.dbservice import get_weeks_list_for_activities  # noqa: E402
 
 
 router = Router()
-
-
-def ikb_activity_tick(activity_id: int, day=False):
-    """Одно задание по дням недели и возможность отметить выполнения по дням"""
-    activity = Activity_serialize.validate(
-        ChildDB.get_activity_one(activity_id=activity_id, day=day))
-    builder = InlineKeyboardBuilder()
-    # Сортировка по дате
-    days = sorted(activity.activity_days, key=lambda x: x.day)
-    for one_day in days:
-        if one_day.is_done:
-            is_done = '✅'
-        else:
-            is_done = '❌'
-        builder.button(
-            text=f'{one_day.day.strftime("%a %d %b")} {is_done}',
-            callback_data='cb_activity_day_one'
-            )
-        builder.button(
-            text='изменить 🔄',
-            callback_data=TickChangeActivityCFactory(
-                activity_day_id=one_day.id))
-    builder.button(
-        text='Перейти списку заданий',
-        callback_data=BaseChildCFactory(id=activity.child_id, day=False))
-    builder.adjust(2)
-    return builder.as_markup()
 
 
 def ikb_weeks(activity_id: int) -> types.InlineKeyboardMarkup:
@@ -87,7 +60,6 @@ async def cb_tick_change_activity_fab(
         ActivityDayDB.change_is_done(
             activity_day_id=int(callback_data.activity_day_id)
             )
-        # TODO: Убрать лишний запрос снизу
         activity_day = Activity_day_serializer.validate(
             get_activity_day(activity_day_id=callback_data.activity_day_id))
         activity = Activity_serialize.validate(
@@ -96,15 +68,18 @@ async def cb_tick_change_activity_fab(
         info = activity_to_text(activity)
         await callback.message.edit_text(
             text=f'<code>{info}\n</code>',
-            reply_markup=ikb_activity_tick(activity.id)
+            reply_markup=ikb_activity_tick(
+                activity_id=activity.id,
+                day=activity_day.day)
             )
     except:
         await callback.message.answer('Ошибка ввода')
 
 
-@router.callback_query(ActivityCFactory.filter())
-async def cb_child_activity_fab(callback: types.CallbackQuery,
-                                callback_data: ActivityCFactory) -> None:
+@router.callback_query(ActivityCallbackFactory.filter())
+async def cb_child_activity_fab(
+        callback: types.CallbackQuery,
+        callback_data: ActivityCallbackFactory) -> None:
     """Подробности про задание + отметка о выполнении"""
     # TODO: Убрать повторение функции 3 строчки вниз
     activity = Activity_serialize.validate(
@@ -118,7 +93,9 @@ async def cb_child_activity_fab(callback: types.CallbackQuery,
     else:
         await callback.message.edit_text(
             text=f'<code>{info}\n</code>',
-            reply_markup=ikb_activity_tick(activity.id)
+            reply_markup=ikb_activity_tick(
+                activity_id=activity.id,
+                day=convert_date(callback_data.day))
             )
 
 

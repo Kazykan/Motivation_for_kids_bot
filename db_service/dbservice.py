@@ -176,7 +176,7 @@ def report_table_child(child_id: int, day=False):
             activity_id=activity.id,
             day=day, cost=activity.cost)
         current_and_total_payout = f'{weekly_total_payout}/{activity.cost}'
-        lst = [activity.name, current_and_total_payout]
+        lst = [activity.name[:10], current_and_total_payout]
         activity_lst.append(lst + weeks_activity)
         total_payout += weekly_total_payout
 
@@ -184,6 +184,7 @@ def report_table_child(child_id: int, day=False):
     text += f' по {weekly_days[-1].strftime("%d %b")}\n'
 
     total_payout_text = f'\nИтоговая выплата: {total_payout} ₽'
+    total_payout_text += '\n\n[-] нет задания\n[v] выполнено\n[x] не выполнено'
     table = tabulate(activity_lst, headers=['Задание', '₽', 'Пн-Пт СбВс'])
     return text + table + total_payout_text
 
@@ -559,7 +560,7 @@ class ActivityDayDB():
         return activity[0]
 
 
-def get_navigation_arrows_by_days_of_week(child_id, day):
+def get_weekly_navigation_arrows(child_id, day):
     """Проверяем есть активности по предыдущей неделе у ребенка,
     если есть добавляем список кнопок"""
     buttons = []

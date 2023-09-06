@@ -23,9 +23,10 @@ class ActivityDayCompletionNotificationCFactory(
     parent: str
 
 
-class ActivityCFactory(CallbackData, prefix='cb_activity'):
+class ActivityCallbackFactory(CallbackData, prefix='cb_activity'):
     activity_id: int
-    tick: str
+    tick: str  # Изменяем или только получаем данные для просмотра ребенка
+    day: str | None  # какой день недели смотрим текущий или другие
 
 
 class ActivityChildCFactory(CallbackData, prefix='cb_activity_child'):

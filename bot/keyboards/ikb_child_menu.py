@@ -1,9 +1,9 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.cbdata import ActivityCFactory, AddActivityCFactory, \
+from bot.cbdata import ActivityCallbackFactory, AddActivityCFactory, \
     BaseChildCFactory, ChangeOneWeekOnActivityCFactory, \
     DeleteActivityCFactory, EditActivityCFactory
-from db_service.dbservice import ChildDB, get_navigation_arrows_by_days_of_week
+from db_service.dbservice import ChildDB, get_weekly_navigation_arrows
 from db_service.pydantic_model import Child_serialize_activities
 
 
@@ -15,7 +15,7 @@ def ikb_child_menu(child_id: int, day=False):
         ChildDB.get_data(child_id=child_id)
         )
     builder = InlineKeyboardBuilder()
-    navigation_button = get_navigation_arrows_by_days_of_week(
+    navigation_button = get_weekly_navigation_arrows(
         child_id=child_id,
         day=day
         )
@@ -30,11 +30,13 @@ def ikb_child_menu(child_id: int, day=False):
     for activity in child_info.activities:
         builder.button(
             text=f'{activity.name}',
-            callback_data=ActivityCFactory(activity_id=activity.id, tick='no')
+            callback_data=ActivityCallbackFactory(
+                activity_id=activity.id, tick='no')
             )
         builder.button(
             text='✔️',
-            callback_data=ActivityCFactory(activity_id=activity.id, tick='yes')
+            callback_data=ActivityCallbackFactory(
+                activity_id=activity.id, tick='yes')
             )
         builder.button(
             text='📅',
