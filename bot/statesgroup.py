@@ -1,8 +1,9 @@
+"""Машина состояний для работы опросника"""
 from aiogram.fsm.state import StatesGroup, State
 
 
 class AddParentStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по добавлению Родителя и детей"""
+    """Добавление Родителя и детей"""
     parent_number = State()
     gender = State()
     child_phone = State()
@@ -11,21 +12,21 @@ class AddParentStatesGroup(StatesGroup):
 
 
 class AddOneMoreParentSGroup(StatesGroup):
-    """Машина состояний для работы опросника по добавлению еще одного Родителя"""
+    """Добавление еще одного Родителя"""
     parent_name = State()
     gender = State()
     parent_number = State()
 
 
-class AddOneMoreChildStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по добавлению еще одного Родителя"""
+class AddOneMoreChildSGroup(StatesGroup):
+    """Добавление еще одного Ребенка"""
     phone = State()
     name = State()
     gender = State()
 
 
-class AddActivityStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по добавлению задания"""
+class AddActivitySGroup(StatesGroup):
+    """Добавление задания"""
     name = State()
     title = State()
     percent_complete = State()
@@ -33,10 +34,6 @@ class AddActivityStatesGroup(StatesGroup):
     weeks = State()
 
 
-class EditActivityStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по редактированию задания"""
+class EditActivitySGroup(StatesGroup):
+    """Редактированию задания"""
     next = State()
-    # name = State()
-    # title = State()
-    # percent_complete = State()
-    # cost = State()

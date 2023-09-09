@@ -15,8 +15,7 @@ from bot.keyboards.kb_parent import ikb_parent_children, \
     kb_share_phone  # noqa: E402
 from bot.cbdata import ActivityDayCompletionNotificationCFactory, \
     GenderCFactory, TickChangeActivityCFactory  # noqa: E402
-from db_service.service import get_child_gender_emoji, valid_name, \
-    valid_number  # noqa: E402
+from db_service.service import valid_name, valid_number  # noqa: E402
 from db_service.dbservice import ActivityDayDB, ChildDB, ParentDB, \
     add_parent_and_child  # noqa: E402
 from db_service.pydantic_model import Parent_and_child  # noqa: E402

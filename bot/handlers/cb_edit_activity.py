@@ -10,7 +10,7 @@ from bot.keyboards.ikb_activity_edit_list import \
 from bot.keyboards.ikb_child_menu import ikb_child_menu  # noqa: E402
 from bot.cbdata import EditActivityCFactory, \
     EditActivityOptionsCFactory  # noqa: E402
-from bot.statesgroup import EditActivityStatesGroup  # noqa: E402
+from bot.statesgroup import EditActivitySGroup  # noqa: E402
 from db_service.dbservice import ActivityDB  # noqa: E402
 from db_service.pydantic_model import Activity_serialize  # noqa: E402
 
@@ -88,10 +88,10 @@ async def cb_edit_activity_option(
         )
         await state.update_data(update_field=f'{callback_data.field}')
         # await state.set_state(EditActivityStatesGroup.cost)
-    await state.set_state(EditActivityStatesGroup.next)
+    await state.set_state(EditActivitySGroup.next)
 
 
-@router.message(EditActivityStatesGroup.next)
+@router.message(EditActivitySGroup.next)
 async def edit_activity_option_next(
         message: types.Message, state: FSMContext) -> None:
     """Изменения полей активности - 2 этап добавление в БД изменений"""
@@ -120,7 +120,7 @@ async def edit_activity_option_next(
         except ValueError:
             await message.edit_text(
                 text="от 1 до 100 % вводите только цифры!")
-            await state.set_state(EditActivityStatesGroup.next)
+            await state.set_state(EditActivitySGroup.next)
 
     if data['update_field'] == 'cost':
         print('cost update')
@@ -133,7 +133,7 @@ async def edit_activity_option_next(
         except ValueError:
             await message.edit_text(
                 "от 1 до 100 000 ₽ вводите только цифры!")
-            await state.set_state(EditActivityStatesGroup.next)
+            await state.set_state(EditActivitySGroup.next)
     await message.answer(
         text='Данные обновлены',
         reply_markup=ikb_child_menu(child_id=data['child_id']))

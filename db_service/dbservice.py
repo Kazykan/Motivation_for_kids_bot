@@ -566,20 +566,22 @@ def get_weekly_navigation_arrows(child_id, day):
     buttons = []
 
     if day == 'False' or day is False:
-        day = date.today()
+        _day = date.today()
+    elif isinstance(day, date):
+        _day = day
     else:
-        day = convert_date(day=day)
+        _day = convert_date(day=day)
 
     previous_week = ActivityDayDB.is_previous_week(
         child_id=child_id,
-        day=(day - timedelta(days=7))
+        day=(_day - timedelta(days=7))
         )
     next_week = ActivityDayDB.is_previous_week(
         child_id=child_id,
-        day=(day + timedelta(days=7))
+        day=(_day + timedelta(days=7))
         )
-    previous_week_str = convert_date(day - timedelta(days=7))
-    next_week_str = convert_date(day + timedelta(days=7))
+    previous_week_str = convert_date(_day - timedelta(days=7))
+    next_week_str = convert_date(_day + timedelta(days=7))
 
     if previous_week and next_week:
         buttons.append({

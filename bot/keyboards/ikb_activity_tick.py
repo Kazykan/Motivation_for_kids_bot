@@ -1,6 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.cbdata import ActivityCallbackFactory, BaseChildCFactory, TickChangeActivityCFactory
+from bot.cbdata import ActivityCallbackFactory, BaseChildCFactory, \
+    TickChangeActivityCFactory
 from db_service.dbservice import ChildDB, get_weekly_navigation_arrows
 from db_service.pydantic_model import Activity_serialize
 

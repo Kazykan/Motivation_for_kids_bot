@@ -12,7 +12,7 @@ from bot.keyboards.ikb_child_menu import ikb_child_menu
 sys.path.append("..")
 from bot.keyboards.kb_delete_activity import ikb_delete_activity  # noqa: E402
 from bot.keyboards.kb_list_of_activity import ikb_list_of_activity  # noqa: E402
-from bot.statesgroup import AddActivityStatesGroup  # noqa: E402
+from bot.statesgroup import AddActivitySGroup  # noqa: E402
 from bot.cbdata import ActivityCallbackFactory, AddActivityCFactory, \
     BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, \
     ChangeOneWeekOnActivityCFactory  # noqa: E402
@@ -141,10 +141,10 @@ async def cb_child_add_activity(callback: types.CallbackQuery,
         f'Добавить задание для: {gender} {child_info.name}\n'
         f'Введите название задания, желательно состоящее из одного слова...\n')
     await state.update_data(child_id=child_info.id)
-    await state.set_state(AddActivityStatesGroup.name)
+    await state.set_state(AddActivitySGroup.name)
 
 
-@router.message(AddActivityStatesGroup.name)
+@router.message(AddActivitySGroup.name)
 async def child_add_activity_name(
         message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 2 этап описание задания"""
@@ -152,10 +152,10 @@ async def child_add_activity_name(
     data = await state.get_data()  # Загружаем данные из FSM
     await message.answer(
         text=f"Введите описание для задания: <b>{data['name']}</b>")
-    await state.set_state(AddActivityStatesGroup.title)
+    await state.set_state(AddActivitySGroup.title)
 
 
-@router.message(AddActivityStatesGroup.title)
+@router.message(AddActivitySGroup.title)
 async def child_add_activity_title(
         message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 3 этап процент для выполнения"""
@@ -165,10 +165,10 @@ async def child_add_activity_title(
         f"Введите процент выполнения для задания - <b>{data['name']}</b>"
         f"\nот 1 до 100 % вводите только цифры"
         )
-    await state.set_state(AddActivityStatesGroup.percent_complete)
+    await state.set_state(AddActivitySGroup.percent_complete)
 
 
-@router.message(AddActivityStatesGroup.percent_complete)
+@router.message(AddActivitySGroup.percent_complete)
 async def child_add_activity_percent_complete(
         message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 4 этап стоимость выполнения"""
@@ -182,12 +182,12 @@ async def child_add_activity_percent_complete(
             f"от 1 до 100 % вводите только цифры!"
             f"Введите процент выполнения для задания - {data['name']}"
             )
-        await state.set_state(AddActivityStatesGroup.percent_complete)
+        await state.set_state(AddActivitySGroup.percent_complete)
     await message.answer(f"Введите стоимость для задания: {data['name']}")
-    await state.set_state(AddActivityStatesGroup.cost)
+    await state.set_state(AddActivitySGroup.cost)
 
 
-@router.message(AddActivityStatesGroup.cost)
+@router.message(AddActivitySGroup.cost)
 async def child_add_activity_cost(
         message: types.Message, state: FSMContext) -> None:
     """Добавить задание для ребенка - 5 этап выбор дней недели"""
@@ -202,7 +202,7 @@ async def child_add_activity_cost(
             f"от 1 до 100 000 ₽ вводите только цифры!"
             f"Введите стоимость для задания: {data['name']}"
             )
-        await state.set_state(AddActivityStatesGroup.cost)
+        await state.set_state(AddActivitySGroup.cost)
     data = await state.get_data()  # получаем новые данные в state
     try:
         info = Activity_base.validate(data)

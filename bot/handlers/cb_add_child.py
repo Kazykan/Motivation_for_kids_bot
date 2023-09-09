@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 
 sys.path.append("..")
-from bot.statesgroup import AddOneMoreChildStatesGroup  # noqa: E402
+from bot.statesgroup import AddOneMoreChildSGroup  # noqa: E402
 from bot.keyboards.kb_general import ikb_gender  # noqa: E402
 from bot.keyboards.kb_parent import ikb_parent_children  # noqa: E402
 from bot.cbdata import GenderCFactory  # noqa: E402
@@ -24,10 +24,10 @@ async def cb_add_one_more_child(
         callback: types.CallbackQuery, state: FSMContext) -> None:
     """Первый пункт опросника по добавлению еще одного ребенка"""
     await callback.message.answer(text="Введите имя еще одного ребенка")
-    await state.set_state(AddOneMoreChildStatesGroup.name)
+    await state.set_state(AddOneMoreChildSGroup.name)
 
 
-@router.message(AddOneMoreChildStatesGroup.name)
+@router.message(AddOneMoreChildSGroup.name)
 async def cb_add_one_more_child_name(
         message: types.Message, state: FSMContext) -> None:
     """Добавление данных ребенка - 2 этап имя ребенка"""
@@ -36,12 +36,10 @@ async def cb_add_one_more_child_name(
         text=f'Выберите пол - {message.text}',
         reply_markup=ikb_gender())
 
-    await state.set_state(AddOneMoreChildStatesGroup.gender)
+    await state.set_state(AddOneMoreChildSGroup.gender)
 
 
-@router.callback_query(
-        GenderCFactory.filter(),
-        AddOneMoreChildStatesGroup.gender)
+@router.callback_query(GenderCFactory.filter(), AddOneMoreChildSGroup.gender)
 async def cb_add_one_more_child_gender(
         callback: types.CallbackQuery,
         callback_data: GenderCFactory,
@@ -52,10 +50,10 @@ async def cb_add_one_more_child_gender(
     data = await state.get_data()
     await callback.message.answer(
         text=f'Введите номер телефона <b>{data["name"]}</b>:')
-    await state.set_state(AddOneMoreChildStatesGroup.phone)
+    await state.set_state(AddOneMoreChildSGroup.phone)
 
 
-@router.message(AddOneMoreChildStatesGroup.phone)
+@router.message(AddOneMoreChildSGroup.phone)
 async def cb_add_one_more_child_phone(
         message: types.Message, state: FSMContext) -> None:
     """Добавление данных ребенка - 4 этап номер телефона ребенка"""
