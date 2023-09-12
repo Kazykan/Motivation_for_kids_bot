@@ -53,10 +53,12 @@ def child_activity_by_day(activity_day_id: int, day=False) -> list:
     for day in days:
         if day.is_done:
             is_done = 'v'
-        elif day.is_done == False:
+        elif day.is_done is False:
             is_done = 'x'
         week = day.day.weekday()
         weeks[week] = is_done
+
+    # добавляем пробел между будними днями и выходными  '----- --'
     weeks.insert(5, ' ')
     return [''.join(weeks)]
 
@@ -87,7 +89,8 @@ def get_activity_week(activity_id, week_id):
 
 
 def add_activity_week(activity_id, week_id):
-    activity = session.query(Activity).filter(Activity.id == activity_id).first()
+    activity = session.query(Activity).filter(
+        Activity.id == activity_id).first()
     week = session.query(Week).filter(Week.id == week_id).first()
     activity.weeks.append(week)
     session.commit()
@@ -255,8 +258,11 @@ class ParentDB:
         )
         session.add(parent)
         session.commit()
-        for child_id in data['all_children_id']:  # Добавляем через цикл связь МТМ новый родитель и детей
-            child_ph = session.query(Child).filter(Child.id == child_id).first()
+
+        # Добавляем через цикл связь МТМ новый родитель и детей
+        for child_id in data['all_children_id']:
+            child_ph = session.query(Child).filter(
+                Child.id == child_id).first()
             child_ph.parents.append(parent)
             session.commit()
 
@@ -553,14 +559,14 @@ class ActivityDayDB():
             return activity_day[0][0]
 
     @staticmethod
-    def get_activity_name(activity_day_id):
+    def get_activity_name(activity_day_id: int):
         activity = session.query(Activity.name).filter(and_(
             Activity.id == Activity_day.activity_id,
             Activity_day.id == activity_day_id)).first()
         return activity[0]
 
 
-def get_weekly_navigation_arrows(child_id, day):
+def get_weekly_navigation_arrows(child_id: int, day):
     """Проверяем есть активности по предыдущей неделе у ребенка,
     если есть добавляем список кнопок"""
     buttons = []
