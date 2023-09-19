@@ -4,6 +4,8 @@ import sys
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 
+from db_service.service import activity_to_text
+
 sys.path.append("..")
 from bot.keyboards.ikb_activity_edit_list import \
     ikb_activity_edit_list  # noqa: E402
@@ -11,7 +13,7 @@ from bot.keyboards.ikb_child_menu import ikb_child_menu  # noqa: E402
 from bot.cbdata import EditActivityCFactory, \
     EditActivityOptionsCFactory  # noqa: E402
 from bot.statesgroup import EditActivitySGroup  # noqa: E402
-from db_service.dbservice import ActivityDB  # noqa: E402
+from db_service.dbservice import ActivityDB, ChildDB  # noqa: E402
 from db_service.pydantic_model import Activity_serialize  # noqa: E402
 
 
@@ -23,14 +25,18 @@ async def cb_edit_activity(
         callback: types.CallbackQuery,
         callback_data: EditActivityCFactory) -> None:
     """Изменения активности"""
+    # activity = Activity_serialize.validate(
+    #     ActivityDB.get_info(activity_id=callback_data.activity_id))
+
     activity = Activity_serialize.validate(
-        ActivityDB.get_info(activity_id=callback_data.activity_id))
+        ChildDB.get_activity_one(activity_id=int(callback_data.activity_id)))
+    info = activity_to_text(activity)
     await callback.message.edit_text(
-        text=f'Изменить данные по задаче <b> {activity.name} </b>'
-        f'\nВыберите что изменить',
+        text=f'<code>{info}</code>'
+             f'\n\n<b>Выберите что изменить</b>',
         reply_markup=ikb_activity_edit_list(
             activity_id=callback_data.activity_id)
-    )
+        )
 
 
 @router.callback_query(EditActivityOptionsCFactory.filter())

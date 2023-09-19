@@ -16,7 +16,9 @@ from sqlalchemy import select, and_  # noqa: E402
 
 
 def add_parent_and_child(info):
-    """Добавление нового родителя и его ребенка + добавление связи м-т-м между ними"""
+    """Добавление нового родителя и его ребенка\
+        + добавление связи м-т-м между ними"""
+
     parent = Parent(
         name=info.name,
         sex=info.sex,

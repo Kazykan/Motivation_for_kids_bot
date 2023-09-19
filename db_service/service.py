@@ -63,6 +63,14 @@ def activity_to_text(activity: Activity_serialize, day=False):
             f'Описание: <b>{activity.title}</b>\n'
             f'Стоимость за выполнение: <b>{activity.cost} ₽</b>\n'
             f'Активный дни недели: {split_by_week_day(activity.weeks)}')
+    return text
+
+
+def get_complete_list_activity_weekday(
+        activity: Activity_serialize,
+        day=False) -> str:
+    """Список активных дней недели с отметками о выполнении"""
+    text = ''
     if day:
         this_week = get_this_week(this_day=day)
     else:

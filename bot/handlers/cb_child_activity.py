@@ -6,12 +6,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot.keyboards.ikb_activity_tick import ikb_activity_tick
 from bot.keyboards.ikb_child_menu import ikb_child_menu
+from bot.keyboards.ikb_edit_activity import ikb_edit_activity_menu
 # from aiogram.types import FSInputFile
 
 
 sys.path.append("..")
 from bot.keyboards.kb_delete_activity import ikb_delete_activity  # noqa: E402
-from bot.keyboards.kb_list_of_activity import ikb_list_of_activity  # noqa: E402
+from bot.keyboards.kb_list_of_activity import ikb_list_of_activity  # noqa:E402
 from bot.statesgroup import AddActivitySGroup  # noqa: E402
 from bot.cbdata import ActivityCallbackFactory, AddActivityCFactory, \
     BaseChildCFactory, DeleteActivityCFactory, TickChangeActivityCFactory, \
@@ -21,7 +22,7 @@ from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, \
     get_activity_day, get_activity_week  # noqa: E402
 from db_service.pydantic_model import Activity_day_serializer, \
     Activity_serialize, Child_serialize_activities, Activity_base  # noqa: E402
-from db_service.service import activity_to_text, convert_date, \
+from db_service.service import activity_to_text, convert_date, get_complete_list_activity_weekday, \
     is_weekday_on, get_child_gender_emoji  # noqa: E402
 from db_service.dbservice import get_weeks_list_for_activities  # noqa: E402
 
@@ -81,14 +82,15 @@ async def cb_child_activity_fab(
         callback: types.CallbackQuery,
         callback_data: ActivityCallbackFactory) -> None:
     """Подробности про задание + отметка о выполнении"""
-    # TODO: Убрать повторение функции 3 строчки вниз
     activity = Activity_serialize.validate(
         ChildDB.get_activity_one(activity_id=int(callback_data.activity_id)))
     info = activity_to_text(activity)
     if callback_data.tick == 'no':
         await callback.message.edit_text(
             text=f'<code>{info}\n</code>',
-            reply_markup=ikb_child_menu(child_id=activity.child_id, day=False)
+            reply_markup=ikb_edit_activity_menu(
+                child_id=activity.child_id,
+                day=False)
             )
     else:
         await callback.message.edit_text(
@@ -248,8 +250,11 @@ async def cb_change_week_on_activity(
     activity = Activity_serialize.validate(
         ChildDB.get_activity_one(activity_id=int(callback_data.activity_id)))
     info = activity_to_text(activity)
+    list_of_weekday_activity_text = get_complete_list_activity_weekday(
+        activity=activity)
     await callback.message.edit_text(
-        text=f'<code>{info}</code>\nВыберите дни недели для задания\n'
+        text=f'<code>{info}{list_of_weekday_activity_text}</code>'
+             f'\nВыберите дни недели для задания\n'
              f'<b> ВНИМАНИЕ !!! </b> '
              f'Изменения приведут к обнулению отметок в текущей неделе',
              reply_markup=ikb_weeks(callback_data.activity_id)
