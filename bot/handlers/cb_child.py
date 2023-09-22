@@ -7,6 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.statesgroup import AddChildStatesGroup
+
 
 sys.path.append("..")
 from bot.keyboards.kb_child import ikb_child_activity_list, \
@@ -23,21 +25,6 @@ from db_service.pydantic_model import Activity_serialize, \
 
 
 router = Router()
-
-
-class AddChildStatesGroup(StatesGroup):
-    """Машина состояний для работы опросника по регистрации Ребенка"""
-    child_phone = State()
-
-
-# def ikb_child_total_info(child_id: int):
-#     """вапвап"""
-#     builder = InlineKeyboardBuilder()
-#     builder.button(
-#         text='Общий итого',
-#         callback_data=ChildInfoCFactory(id=child_id, day='False'))
-#     builder.adjust(1)
-#     return builder.as_markup()
 
 
 def ikb_child_completion_notification_for_parents(

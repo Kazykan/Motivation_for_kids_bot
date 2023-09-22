@@ -37,3 +37,8 @@ class AddActivitySGroup(StatesGroup):
 class EditActivitySGroup(StatesGroup):
     """Редактированию задания"""
     next = State()
+
+
+class AddChildStatesGroup(StatesGroup):
+    """Машина состояний для работы опросника по регистрации Ребенка"""
+    child_phone = State()
