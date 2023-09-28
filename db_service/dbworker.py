@@ -121,7 +121,7 @@ class Parent(Base):
                           'phone': x.phone,
                           'sex': x.sex} for x in self.children]
         }
-    
+
 
 class Activity(Base):
     """Активности"""
@@ -144,7 +144,6 @@ class Activity(Base):
 
     @property
     def serialize(self):
-        # TODO: Загрузка текущей недели в activity_days
         return {
             'id': self.id,
             'name': self.name,
@@ -153,8 +152,6 @@ class Activity(Base):
             'cost': self.cost,
             'max_cost': self.max_cost,
             'child_id': self.child_id,
-            # 'child_name': session.query(Child.name).filter(
-            # Child.id == self.child_id).first(),
             'weeks': [
                 {'week': x.week_day,
                  'week_id': x.id

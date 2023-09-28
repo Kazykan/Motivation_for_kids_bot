@@ -22,7 +22,8 @@ from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, \
     get_activity_day, get_activity_week  # noqa: E402
 from db_service.pydantic_model import Activity_day_serializer, \
     Activity_serialize, Child_serialize_activities, Activity_base  # noqa: E402
-from db_service.service import activity_to_text, convert_date, get_complete_list_activity_weekday, \
+from db_service.service import activity_to_text, convert_date, \
+    get_complete_list_activity_weekday, \
     is_weekday_on, get_child_gender_emoji  # noqa: E402
 from db_service.dbservice import get_weeks_list_for_activities  # noqa: E402
 
@@ -63,6 +64,7 @@ async def cb_tick_change_activity_fab(
             )
         activity_day = Activity_day_serializer.validate(
             get_activity_day(activity_day_id=callback_data.activity_day_id))
+
         activity = Activity_serialize.validate(
             ChildDB.get_activity_one(activity_id=int(activity_day.activity_id))
             )

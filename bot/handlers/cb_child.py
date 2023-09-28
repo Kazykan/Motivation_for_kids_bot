@@ -4,7 +4,6 @@ import sys
 from aiogram import Router, types, F
 from aiogram.filters.text import Text
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.statesgroup import AddChildStatesGroup
