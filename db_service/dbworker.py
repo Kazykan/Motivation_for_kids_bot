@@ -188,7 +188,9 @@ class Activity_day(Base):
     __tablename__ = "activity_day"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    is_done: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 0-не активно, 1-вып.ребенком, 2-вып.подтверждено родителем
+    # 3-не вып. отмечено ребенком, 4-не вып. отмечено родителем
+    is_done: Mapped[int] = mapped_column(SmallInteger, default=0)
     day: Mapped[datetime.date] = mapped_column(Date)
     activity_id: Mapped[int] = mapped_column(ForeignKey('activity.id'))
 
