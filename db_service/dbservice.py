@@ -72,12 +72,6 @@ def get_weeks_list_for_activities(activity_id):
     return activity_info.serialize
 
 
-def get_activity_day(activity_day_id: int):
-    activity_day = session.query(Activity_day).filter(
-        Activity_day.id == activity_day_id).first()
-    return activity_day.serialize
-
-
 def get_activity_week(activity_id, week_id):
     stmt = select(Week).where(
         and_(

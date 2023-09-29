@@ -19,7 +19,7 @@ from bot.cbdata import ActivityCallbackFactory, AddActivityCFactory, \
     ChangeOneWeekOnActivityCFactory  # noqa: E402
 from db_service.dbservice import ActivityDB, ActivityDayDB, ChildDB, \
     add_activity_week, delete_activity_week, report_table_child, \
-    get_activity_day, get_activity_week  # noqa: E402
+    get_activity_week  # noqa: E402
 from db_service.pydantic_model import Activity_day_serializer, \
     Activity_serialize, Child_serialize_activities, Activity_base  # noqa: E402
 from db_service.service import activity_to_text, convert_date, \
@@ -63,7 +63,7 @@ async def cb_tick_change_activity_fab(
             activity_day_id=int(callback_data.activity_day_id)
             )
         activity_day = Activity_day_serializer.validate(
-            get_activity_day(activity_day_id=callback_data.activity_day_id))
+            ActivityDayDB.info(activity_day_id=callback_data.activity_day_id))
 
         activity = Activity_serialize.validate(
             ChildDB.get_activity_one(activity_id=int(activity_day.activity_id))
