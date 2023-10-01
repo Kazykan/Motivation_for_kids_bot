@@ -517,7 +517,7 @@ class ActivityDayDB():
         session.commit()
 
     @staticmethod
-    def change_is_done(activity_day_id: int):
+    def change_is_done(activity_day_id: int, parent=True):
         activity_day = session.query(Activity_day).filter(
             Activity_day.id == activity_day_id).first()
         if activity_day.is_done:

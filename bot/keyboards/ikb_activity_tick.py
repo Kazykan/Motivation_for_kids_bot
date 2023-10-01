@@ -15,8 +15,14 @@ def ikb_activity_tick(activity_id: int, day=False):
     days = sorted(activity.activity_days, key=lambda x: x.day)
     row = []
     for one_day in days:
-        if one_day.is_done:
+        if one_day.is_done == 0:
+            is_done = '🔹'
+        elif one_day.is_done == 1:
+            is_done = '☑️'
+        elif one_day.is_done == 2:
             is_done = '✅'
+        elif one_day.is_done == 3:
+            is_done = '❌'
         else:
             is_done = '❌'
         builder.button(
