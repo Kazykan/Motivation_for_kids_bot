@@ -1,7 +1,7 @@
 import datetime
 
 from typing import List
-from sqlalchemy import create_engine, Column, Integer, String, Date,\
+from sqlalchemy import create_engine, Column, Integer, String, \
     Boolean, Table, ForeignKey, SmallInteger
 from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase, \
     Mapped, mapped_column
